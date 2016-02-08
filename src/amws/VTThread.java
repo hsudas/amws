@@ -62,6 +62,9 @@ public class VTThread extends Thread
         }
     }
 
+    /**
+     * metodlarin surekli calismasi icin sayac kurar
+     */
     public void sayacKur()
     {
         Timer timer = new Timer();
@@ -72,13 +75,19 @@ public class VTThread extends Thread
             {
                 System.out.println("thread basladi");
 
-                List<RaporIstek> listeRaporIstek = yeniRaporIstekleriniKontrolEt();
+                List<YeniRaporIstek> listeYeniRaporIstek = yeniRaporIstekleriniKontrolEt();
+                if (!listeYeniRaporIstek.isEmpty())
+                {
+                    for (int i = 0; i < listeYeniRaporIstek.size(); i++)
+                    {
+                        reportRequest(listeYeniRaporIstek.get(i));
+                    }
+                }
+
+                List<RaporIstek> listeRaporIstek = raporIstekleriniKontrolEt();
                 if (!listeRaporIstek.isEmpty())
                 {
-                    for (int i = 0; i < listeRaporIstek.size(); i++)
-                    {
-                        reportRequest(listeRaporIstek.get(i));
-                    }
+                    getReportRequestList(listeRaporIstek);
                 }
             }
         }, 0, 60 * 1000);
@@ -114,21 +123,21 @@ public class VTThread extends Thread
     }
 
     /**
-     * vt ye girilmis yeni rapor istegi var mı diye kontrol eder
+     * status u _SUBMITTED_ yada _IN_PROGRESS_ olan kayitlarin bilgilerini alir
      *
-     * @return : yeni isteklerin listesi
+     * @return
      */
-    public List<RaporIstek> yeniRaporIstekleriniKontrolEt()
+    public List<RaporIstek> raporIstekleriniKontrolEt()
     {
         List<RaporIstek> listeRaporIstek = new ArrayList<>();
 
         try
         {
-            PreparedStatement pst = conn.prepareStatement("SELECT ID, START_DATE, END_DATE, REPORT_TYPE FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS IS NULL;");
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, REPORT_REQUEST_ID FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS='_SUBMITTED_' OR  STATUS='_IN_PROGRESS_';");
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
-                RaporIstek ri = new RaporIstek(rs.getInt("ID"), rs.getString("START_DATE"), rs.getString("END_DATE"), rs.getString("REPORT_TYPE"));
+                RaporIstek ri = new RaporIstek(rs.getInt("ID"), rs.getString("REPORT_REQUEST_ID"));
                 listeRaporIstek.add(ri);
             }
         }
@@ -136,8 +145,124 @@ public class VTThread extends Thread
         {
             System.out.println("hata : " + e.getMessage());
         }
-
         return listeRaporIstek;
+    }
+
+    /**
+     * amws e baglanip ReportRequestList islemi yapar
+     *
+     * @param listeRaporIstek : ReportRequestList isleminde sorulacak raporların
+     * verileri
+     */
+    public void getReportRequestList(List<RaporIstek> listeRaporIstek)
+    {
+
+        GetReportRequestListRequest request = new GetReportRequestListRequest();
+        request.setMerchant(merchantId);
+
+        List<String> listeReportRequestID = new ArrayList<>();
+        for (int i = 0; i < listeRaporIstek.size(); i++)
+        {
+            listeReportRequestID.add(listeRaporIstek.get(i).getReportRequestID());
+        }
+
+        //reportRequestList e gonderilecek idler
+        IdList liste = new IdList(listeReportRequestID);
+        System.out.println("idlist : " + liste.getId().toString());
+
+        request.setReportRequestIdList(liste);
+        try
+        {
+            GetReportRequestListResponse response = service.getReportRequestList(request);
+            if (response.isSetGetReportRequestListResult())
+            {
+                GetReportRequestListResult getReportRequestListResult = response.getGetReportRequestListResult();
+                java.util.List<ReportRequestInfo> reportRequestInfoList = getReportRequestListResult.getReportRequestInfoList();
+                for (int i = 0; i < reportRequestInfoList.size(); i++)
+                {
+                    ReportRequestInfo reportRequestInfo = reportRequestInfoList.get(i);
+                    if (reportRequestInfo.isSetReportProcessingStatus())
+                    {
+                        System.out.println("id : " + listeRaporIstek.get(i).getId());
+                        System.out.println("ReportProcessingStatus : " + reportRequestInfo.getReportProcessingStatus());
+
+                        vtReportRequestListGuncelle(listeRaporIstek.get(i).getId(), reportRequestInfo);
+                    }
+                }
+            }
+        }
+        catch (MarketplaceWebServiceException ex)
+        {
+
+            System.out.println("Caught Exception: " + ex.getMessage());
+            System.out.println("Response Status Code: " + ex.getStatusCode());
+            System.out.println("Error Code: " + ex.getErrorCode());
+            System.out.println("Error Type: " + ex.getErrorType());
+            System.out.println("Request ID: " + ex.getRequestId());
+            System.out.print("XML: " + ex.getXML());
+            System.out.println("ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
+        }
+    }
+
+    /**
+     * ReportRequestList sonucu alindiktan sonra vt de gerekli yerleri gunceller
+     *
+     * @param raporID : vt id si
+     * @param rri : ReportRequestList sonucu
+     */
+    public void vtReportRequestListGuncelle(int raporID, ReportRequestInfo rri)
+    {
+        try
+        {
+            if (rri.getReportProcessingStatus().equals("_DONE_"))
+            {
+                PreparedStatement pst = conn.prepareStatement("UPDATE ROYAL.ROYAL.REPORT_REQUEST SET STATUS=?, GENERATED_REPORT_ID=? WHERE ID=?;");
+                pst.setString(1, rri.getReportProcessingStatus());
+                pst.setString(2, rri.getGeneratedReportId());
+                pst.setString(3, String.valueOf(raporID));
+
+                pst.executeUpdate();
+            }
+            else
+            {
+                PreparedStatement pst = conn.prepareStatement("UPDATE ROYAL.ROYAL.REPORT_REQUEST SET STATUS=? WHERE ID=?;");
+                pst.setString(1, rri.getReportProcessingStatus());
+                pst.setString(2, String.valueOf(raporID));
+
+                pst.executeUpdate();
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("hata : " + e.getMessage());
+        }
+    }
+
+    /**
+     * vt ye girilmis yeni rapor istegi var mı diye kontrol eder
+     *
+     * @return : yeni isteklerin listesi
+     */
+    public List<YeniRaporIstek> yeniRaporIstekleriniKontrolEt()
+    {
+        List<YeniRaporIstek> listeYeniRaporIstek = new ArrayList<>();
+
+        try
+        {
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, START_DATE, END_DATE, REPORT_TYPE FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS IS NULL;");
+            ResultSet rs = pst.executeQuery();
+            while (rs.next())
+            {
+                YeniRaporIstek ri = new YeniRaporIstek(rs.getInt("ID"), rs.getString("START_DATE"), rs.getString("END_DATE"), rs.getString("REPORT_TYPE"));
+                listeYeniRaporIstek.add(ri);
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("hata : " + e.getMessage());
+        }
+
+        return listeYeniRaporIstek;
     }
 
     /**
@@ -145,7 +270,7 @@ public class VTThread extends Thread
      *
      * @param ri : yapılacak istegin parametrelerinin oldugu nesne
      */
-    public void reportRequest(RaporIstek ri)
+    public void reportRequest(YeniRaporIstek ri)
     {
         int raporID = ri.getId();
         String baslangic = ri.getBaslangicTarihi();
@@ -215,7 +340,7 @@ public class VTThread extends Thread
 
         if (response != null)
         {
-            vtRaporIstekGuncelle(raporID, response);
+            vtRequestReportGuncelle(raporID, response);
         }
         else
         {
@@ -229,7 +354,7 @@ public class VTThread extends Thread
      * @param raporID : requestReport tun vt deki id si
      * @param response : amws den gelen requestReport cevabı
      */
-    public void vtRaporIstekGuncelle(int raporID, RequestReportResponse response)
+    public void vtRequestReportGuncelle(int raporID, RequestReportResponse response)
     {
         ReportRequestInfo info = response.getRequestReportResult().getReportRequestInfo();
 

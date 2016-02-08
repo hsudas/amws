@@ -4,16 +4,12 @@ public class RaporIstek
 {
 
     private int id;
-    private String baslangicTarihi;
-    private String bitisTarihi;
-    private String tip;
+    private String reportRequestID;
 
-    public RaporIstek(int id, String baslangicTarihi, String bitisTarihi, String tip)
+    public RaporIstek(int id, String reportRequestID)
     {
         this.id = id;
-        this.baslangicTarihi = baslangicTarihi;
-        this.bitisTarihi = bitisTarihi;
-        this.tip = tip;
+        this.reportRequestID = reportRequestID;
     }
 
     public int getId()
@@ -21,18 +17,8 @@ public class RaporIstek
         return id;
     }
 
-    public String getBaslangicTarihi()
+    public String getReportRequestID()
     {
-        return baslangicTarihi;
-    }
-
-    public String getBitisTarihi()
-    {
-        return bitisTarihi;
-    }
-
-    public String getTip()
-    {
-        return tip;
+        return reportRequestID;
     }
 }
