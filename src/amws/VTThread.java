@@ -4,6 +4,9 @@ import com.amazonaws.mws.MarketplaceWebService;
 import com.amazonaws.mws.MarketplaceWebServiceClient;
 import com.amazonaws.mws.MarketplaceWebServiceConfig;
 import com.amazonaws.mws.MarketplaceWebServiceException;
+import com.amazonaws.mws.model.GetReportRequestListRequest;
+import com.amazonaws.mws.model.GetReportRequestListResponse;
+import com.amazonaws.mws.model.GetReportRequestListResult;
 import com.amazonaws.mws.model.IdList;
 import com.amazonaws.mws.model.ReportRequestInfo;
 import com.amazonaws.mws.model.RequestReportRequest;
@@ -69,7 +72,7 @@ public class VTThread extends Thread
             {
                 System.out.println("thread basladi");
 
-                List<RaporIstek> listeRaporIstek = raporIstekleriniKontrolEt();
+                List<RaporIstek> listeRaporIstek = yeniRaporIstekleriniKontrolEt();
                 if (!listeRaporIstek.isEmpty())
                 {
                     for (int i = 0; i < listeRaporIstek.size(); i++)
@@ -83,6 +86,7 @@ public class VTThread extends Thread
 
     /**
      * vt ye baglanir
+     *
      * @return vt connection nesnesi
      */
     public Connection vtBaglantisiKur()
@@ -111,9 +115,10 @@ public class VTThread extends Thread
 
     /**
      * vt ye girilmis yeni rapor istegi var mı diye kontrol eder
+     *
      * @return : yeni isteklerin listesi
      */
-    public List<RaporIstek> raporIstekleriniKontrolEt()
+    public List<RaporIstek> yeniRaporIstekleriniKontrolEt()
     {
         List<RaporIstek> listeRaporIstek = new ArrayList<>();
 
@@ -137,6 +142,7 @@ public class VTThread extends Thread
 
     /**
      * amws e baglanıp requestReport islemi yapar
+     *
      * @param ri : yapılacak istegin parametrelerinin oldugu nesne
      */
     public void reportRequest(RaporIstek ri)
@@ -232,10 +238,11 @@ public class VTThread extends Thread
 
         try
         {
-            PreparedStatement pst = conn.prepareStatement("UPDATE ROYAL.ROYAL.REPORT_REQUEST SET STATUS=?, SUBMIT_DATE=? WHERE ID=?;");
+            PreparedStatement pst = conn.prepareStatement("UPDATE ROYAL.ROYAL.REPORT_REQUEST SET STATUS=?, SUBMIT_DATE=?, REPORT_REQUEST_ID=? WHERE ID=?;");
             pst.setString(1, info.getReportProcessingStatus());
             pst.setString(2, submitDate);
-            pst.setString(3, String.valueOf(raporID));
+            pst.setString(3, info.getReportRequestId());
+            pst.setString(4, String.valueOf(raporID));
 
             pst.executeUpdate();
         }
