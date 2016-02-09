@@ -45,11 +45,9 @@ public class VTThread extends Thread
 
     public VTThread()
     {
-        System.out.println("VTThread : ");
         MarketplaceWebServiceConfig mws_config = new MarketplaceWebServiceConfig();
         mws_config.setServiceURL("https://mws.amazonservices.com");
         service = new MarketplaceWebServiceClient(accessKeyId, secretAccessKey, appName, appVersion, mws_config);
-
     }
 
     @Override
@@ -332,19 +330,32 @@ public class VTThread extends Thread
         {
         }
 
-        //XMLGregorianCalendar startDate = df.newXMLGregorianCalendar(new GregorianCalendar(2016, 1, 1));
-        //request.setStartDate(startDate);
-        //request.setEndDate(df.newXMLGregorianCalendar(new GregorianCalendar(2016, 1, 2)));
         // @TODO: set additional request parameters here
-        RequestReportResponse response = invokeRequestReport(service, request);
+        //RequestReportResponse response = invokeRequestReport(service, request);
+        try
+        {
+            RequestReportResponse response = service.requestReport(request);
+            if (response.isSetRequestReportResult())
+            {
+                RequestReportResult requestReportResult = response.getRequestReportResult();
+                if (requestReportResult.isSetReportRequestInfo())
+                {
+                    ReportRequestInfo reportRequestInfo = requestReportResult.getReportRequestInfo();
 
-        if (response != null)
-        {
-            vtRequestReportGuncelle(raporID, response);
+                    vtRequestReportGuncelle(raporID, reportRequestInfo);
+                }
+            }
         }
-        else
+        catch (MarketplaceWebServiceException ex)
         {
-            System.out.println("hata");
+
+            System.out.println("Caught Exception: " + ex.getMessage());
+            System.out.println("Response Status Code: " + ex.getStatusCode());
+            System.out.println("Error Code: " + ex.getErrorCode());
+            System.out.println("Error Type: " + ex.getErrorType());
+            System.out.println("Request ID: " + ex.getRequestId());
+            System.out.print("XML: " + ex.getXML());
+            System.out.println("ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
         }
     }
 
@@ -352,12 +363,11 @@ public class VTThread extends Thread
      * requestReport tan sonra gelen bilgilerle vt yi gunceller
      *
      * @param raporID : requestReport tun vt deki id si
-     * @param response : amws den gelen requestReport cevabı
+     * @param info : amws den gelen requestReport cevabı
      */
-    public void vtRequestReportGuncelle(int raporID, RequestReportResponse response)
+    //public void vtRequestReportGuncelle(int raporID, RequestReportResponse response)
+    public void vtRequestReportGuncelle(int raporID, ReportRequestInfo info)
     {
-        ReportRequestInfo info = response.getRequestReportResult().getReportRequestInfo();
-
         SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         String submitDate = dateformat.format(info.getSubmittedDate().toGregorianCalendar().getTime());
 
@@ -375,112 +385,5 @@ public class VTThread extends Thread
         {
             System.out.println("hata : " + e.getMessage());
         }
-    }
-
-    /**
-     * Request Report request sample requests the generation of a report
-     *
-     * @param service instance of MarketplaceWebService service
-     * @param request Action to invoke
-     */
-    public static RequestReportResponse invokeRequestReport(MarketplaceWebService service, RequestReportRequest request)
-    {
-        RequestReportResponse response = null;
-
-        try
-        {
-            response = service.requestReport(request);
-            //RequestReportResponse response = service.requestReport(request);
-
-            System.out.println("RequestReport Action Response");
-            System.out.println("=============================================================================");
-            System.out.println();
-
-            System.out.print("    RequestReportResponse");
-            System.out.println();
-            if (response.isSetRequestReportResult())
-            {
-                System.out.print("        RequestReportResult");
-                System.out.println();
-                RequestReportResult requestReportResult = response.getRequestReportResult();
-                if (requestReportResult.isSetReportRequestInfo())
-                {
-                    System.out.print("            ReportRequestInfo");
-                    System.out.println();
-                    ReportRequestInfo reportRequestInfo = requestReportResult.getReportRequestInfo();
-                    if (reportRequestInfo.isSetReportRequestId())
-                    {
-                        System.out.print("                ReportRequestId");
-                        System.out.println();
-                        System.out.print("                    " + reportRequestInfo.getReportRequestId());
-                        System.out.println();
-                    }
-                    if (reportRequestInfo.isSetReportType())
-                    {
-                        System.out.print("                ReportType");
-                        System.out.println();
-                        System.out.print("                    " + reportRequestInfo.getReportType());
-                        System.out.println();
-                    }
-                    if (reportRequestInfo.isSetStartDate())
-                    {
-                        System.out.print("                StartDate");
-                        System.out.println();
-                        System.out.print("                    " + reportRequestInfo.getStartDate());
-                        System.out.println();
-                    }
-                    if (reportRequestInfo.isSetEndDate())
-                    {
-                        System.out.print("                EndDate");
-                        System.out.println();
-                        System.out.print("                    " + reportRequestInfo.getEndDate());
-                        System.out.println();
-                    }
-                    if (reportRequestInfo.isSetSubmittedDate())
-                    {
-                        System.out.print("                SubmittedDate");
-                        System.out.println();
-                        System.out.print("                    " + reportRequestInfo.getSubmittedDate());
-                        System.out.println();
-                    }
-                    if (reportRequestInfo.isSetReportProcessingStatus())
-                    {
-                        System.out.print("                ReportProcessingStatus");
-                        System.out.println();
-                        System.out.print("                    " + reportRequestInfo.getReportProcessingStatus());
-                        System.out.println();
-                    }
-                }
-            }
-            if (response.isSetResponseMetadata())
-            {
-                System.out.print("        ResponseMetadata");
-                System.out.println();
-                ResponseMetadata responseMetadata = response.getResponseMetadata();
-                if (responseMetadata.isSetRequestId())
-                {
-                    System.out.print("            RequestId");
-                    System.out.println();
-                    System.out.print("                " + responseMetadata.getRequestId());
-                    System.out.println();
-                }
-            }
-            System.out.println();
-            System.out.println(response.getResponseHeaderMetadata());
-            System.out.println();
-
-        }
-        catch (MarketplaceWebServiceException ex)
-        {
-
-            System.out.println("Caught Exception: " + ex.getMessage());
-            System.out.println("Response Status Code: " + ex.getStatusCode());
-            System.out.println("Error Code: " + ex.getErrorCode());
-            System.out.println("Error Type: " + ex.getErrorType());
-            System.out.println("Request ID: " + ex.getRequestId());
-            System.out.print("XML: " + ex.getXML());
-            System.out.println("ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
-        }
-        return response;
     }
 }
