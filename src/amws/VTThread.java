@@ -4,6 +4,7 @@ import com.amazonaws.mws.MarketplaceWebService;
 import com.amazonaws.mws.MarketplaceWebServiceClient;
 import com.amazonaws.mws.MarketplaceWebServiceConfig;
 import com.amazonaws.mws.MarketplaceWebServiceException;
+import com.amazonaws.mws.model.GetReportRequest;
 import com.amazonaws.mws.model.GetReportRequestListRequest;
 import com.amazonaws.mws.model.GetReportRequestListResponse;
 import com.amazonaws.mws.model.GetReportRequestListResult;
@@ -12,12 +13,13 @@ import com.amazonaws.mws.model.ReportRequestInfo;
 import com.amazonaws.mws.model.RequestReportRequest;
 import com.amazonaws.mws.model.RequestReportResponse;
 import com.amazonaws.mws.model.RequestReportResult;
-import com.amazonaws.mws.model.ResponseMetadata;
+import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -87,6 +89,16 @@ public class VTThread extends Thread
                 {
                     getReportRequestList(listeRaporIstek);
                 }
+
+                List<RaporIstek> listeOlusanRapor = olusanRaporlariKontrolEt();
+                if (!listeOlusanRapor.isEmpty())
+                {
+                    for (int i = 0; i < listeOlusanRapor.size(); i++)
+                    {
+                        getReport(listeOlusanRapor.get(i));
+                    }
+                }
+
             }
         }, 0, 60 * 1000);
     }
@@ -118,6 +130,176 @@ public class VTThread extends Thread
         }
 
         return con;
+    }
+
+    /**
+     * status u _DONE_ downloaded ı 1 olmayan kayıtların bilgilerini alir
+     *
+     * @return
+     */
+    public List<RaporIstek> olusanRaporlariKontrolEt()
+    {
+        List<RaporIstek> listeRaporIstek = new ArrayList<>();
+        try
+        {
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS='_DONE_' AND (DOWNLOADED=0 OR DOWNLOADED IS NULL);");
+            ResultSet rs = pst.executeQuery();
+            while (rs.next())
+            {
+                RaporIstek ri = new RaporIstek(rs.getInt("ID"), rs.getString("GENERATED_REPORT_ID"));
+                listeRaporIstek.add(ri);
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("hata : " + e.getMessage());
+        }
+        return listeRaporIstek;
+    }
+
+    /**
+     * amws e baglanıi getReport islemi yapar. dosyayı indirir, dosya
+     * iceriginden vt sorgusu hazırlayıp vt ye yazar
+     *
+     * @param ri : rapor istek nesnesi
+     */
+    public void getReport(RaporIstek ri)
+    {
+        GetReportRequest request = new GetReportRequest();
+        request.setMerchant(merchantId);
+
+        request.setReportId(ri.getReportRequestID());
+
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmssS");
+        Date date = new Date();
+
+        String dosyaIsmi = "report_" + ri.getReportRequestID() + "_" + dateFormat.format(date) + ".xml";
+
+        try
+        {
+            FOS report = new FOS(dosyaIsmi);
+            request.setReportOutputStream(report);
+
+            service.getReport(request);
+
+            String raporIcerigi = report.getDosyaIcerigi();
+            String[] listeSatirlar = raporIcerigi.split("\n");
+
+            Statement statement = conn.createStatement();
+            String sorgu;
+            for (int i = 0; i < listeSatirlar.length; i++)
+            {
+                String sorgu1 = "INSERT INTO ROYAL.ROYAL.REPORT_CONTENTS (REPORT_ID, ROW_ID";
+                String sorgu2 = "VALUES (" + ri.getReportRequestID() + ", " + String.valueOf(i);
+
+                String[] satirIcerigi = listeSatirlar[i].split("\t");
+
+                for (int j = 0; j < satirIcerigi.length; j++)
+                {
+                    satirIcerigi[j] = satirIcerigi[j].replace("'", "''");
+
+                    sorgu1 = sorgu1 + ", Column" + String.valueOf(j + 1);
+                    sorgu2 = sorgu2 + ", '" + satirIcerigi[j] + "'";
+                }
+
+                sorgu1 = sorgu1 + ")";
+                sorgu2 = sorgu2 + ");";
+                sorgu = sorgu1 + sorgu2;
+                statement.addBatch(sorgu);
+            }
+
+            String guncelleme = "UPDATE ROYAL.ROYAL.REPORT_REQUEST SET DOWNLOADED=1 WHERE ID=" + ri.getId() + ";";
+            statement.addBatch(guncelleme);
+
+            statement.executeBatch();
+
+            /*
+            String genelSorgu="";
+            String sorgu = "";
+            for (int i = 0; i < listeSatirlar.length; i++)
+            {
+
+                String sorgu1 = "INSERT INTO ROYAL.ROYAL.REPORT_CONTENTS (REPORT_ID, ROW_ID";
+                String sorgu2 = "VALUES (" + ri.getReportRequestID() + ", " + String.valueOf(i);
+
+                String[] satirIcerigi = listeSatirlar[i].split("\t");
+
+                for (int j = 0; j < satirIcerigi.length; j++)
+                {
+                    satirIcerigi[j] = satirIcerigi[j].replace("'", "''");
+
+                    sorgu1 = sorgu1 + ", Column" + String.valueOf(j + 1);
+                    sorgu2 = sorgu2 + ", '" + satirIcerigi[j] + "'";
+                }
+
+                sorgu1 = sorgu1 + ")";
+                sorgu2 = sorgu2 + ");";
+
+                sorgu = sorgu1 + sorgu2;
+                genelSorgu = genelSorgu + sorgu;
+            }
+             */
+ /*
+            String genelSorgu;
+            String sorgu1 = "INSERT INTO ROYAL.ROYAL.REPORT_CONTENTS (REPORT_ID, ROW_ID";
+            String[] satirIcerigi = listeSatirlar[0].split("\t");
+            for (int j = 0; j < satirIcerigi.length; j++)
+            {
+                sorgu1 = sorgu1 + ", Column" + String.valueOf(j + 1);
+            }
+            sorgu1 = sorgu1 + ") VALUES ";
+
+            String sorgu = "";
+            for (int i = 0; i < listeSatirlar.length; i++)
+            {
+
+                //String sorgu1 = "INSERT INTO ROYAL.ROYAL.REPORT_CONTENTS (REPORT_ID, ROW_ID";
+                //String sorgu2 = "VALUES (" + ri.getReportRequestID() + ", " + String.valueOf(i);
+                String sorgu2 = "( " + ri.getReportRequestID() + ", " + String.valueOf(i);
+
+                satirIcerigi = listeSatirlar[i].split("\t");
+
+                for (int j = 0; j < satirIcerigi.length; j++)
+                {
+                    satirIcerigi[j] = satirIcerigi[j].replace("'", "''");
+
+                    //sorgu1 = sorgu1 + ", Column" + String.valueOf(j + 1);
+                    sorgu2 = sorgu2 + ", '" + satirIcerigi[j] + "'";
+                }
+
+                //sorgu1 = sorgu1 + ")";
+                sorgu2 = sorgu2 + "),";
+
+                sorgu = sorgu + sorgu2;
+                //sorgu = sorgu1 + sorgu2;
+                //genelSorgu = genelSorgu + sorgu;
+            }
+
+            sorgu = sorgu.substring(0, sorgu.lastIndexOf(","));
+            sorgu = sorgu + ";";
+
+            genelSorgu = sorgu1 + sorgu;
+            //genelSorgu = genelSorgu + ";UPDATE ROYAL.ROYAL.REPORT_REQUEST SET CONTENT=1 WHERE ID="+ri.getId()+";";
+             */
+        }
+        catch (FileNotFoundException e)
+        {
+            System.out.println("hata :  " + e.getMessage());
+        }
+        catch (MarketplaceWebServiceException ex)
+        {
+            System.out.println("Caught Exception: " + ex.getMessage());
+            System.out.println("Response Status Code: " + ex.getStatusCode());
+            System.out.println("Error Code: " + ex.getErrorCode());
+            System.out.println("Error Type: " + ex.getErrorType());
+            System.out.println("Request ID: " + ex.getRequestId());
+            System.out.print("XML: " + ex.getXML());
+            System.out.println("ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
+        }
+        catch (SQLException e)
+        {
+            System.out.println("hata2 : " + e.getMessage());
+        }
     }
 
     /**
@@ -386,4 +568,5 @@ public class VTThread extends Thread
             System.out.println("hata : " + e.getMessage());
         }
     }
+
 }
