@@ -12,12 +12,27 @@ import java.util.logging.Logger;
 public class Amws
 {
 
-    private static DateFormat dateFormat;
+    private static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private static Config cnfg;
 
     public static void main(String[] args)
     {
-        dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         dosyayaYaz("uygulama basladi");
+        cnfg = new Config();
+
+        if (cnfg.ayarlariOku())
+        {
+            if (!cnfg.ayarlariKontrolEt())
+            {
+                dosyayaYaz("ayar dosyasında eksik oldugu icin uygulama kapatıldı");
+                System.exit(0);
+            }
+        }
+        else
+        {
+            dosyayaYaz("ayar dosyası okunurken hata olustugu icin uygulama kapatıldı");
+            System.exit(0);
+        }
 
         VTThread vtThread = new VTThread();
         vtThread.start();
@@ -29,11 +44,11 @@ public class Amws
         try
         {
             out = new PrintWriter(new FileWriter("log.txt", true), true);
-
             Date date = new Date();
-
             out.write(dateFormat.format(date) + " :: " + log + "\n");
             out.close();
+
+            System.out.println(dateFormat.format(date) + " :: " + log);
         }
         catch (IOException ex)
         {
@@ -45,4 +60,8 @@ public class Amws
         }
     }
 
+    public static Config getCnfg()
+    {
+        return cnfg;
+    }
 }

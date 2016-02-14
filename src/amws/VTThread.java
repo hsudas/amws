@@ -1,5 +1,7 @@
 package amws;
 
+import static amws.Amws.dosyayaYaz;
+import static amws.Amws.getCnfg;
 import com.amazonaws.mws.MarketplaceWebService;
 import com.amazonaws.mws.MarketplaceWebServiceClient;
 import com.amazonaws.mws.MarketplaceWebServiceConfig;
@@ -37,18 +39,20 @@ import javax.xml.datatype.XMLGregorianCalendar;
 public class VTThread extends Thread
 {
 
+    private Config cnfg = null;
     private Connection conn = null;
-    private final Config cnfg = new Config();
-    private final String accessKeyId = cnfg.getAccessKeyId();
-    private final String secretAccessKey = cnfg.getSecretAccessKey();
-    private final String merchantId = cnfg.getMerchantId();
-    private final String appName = cnfg.getAppName();
-    private final String appVersion = cnfg.getAppVersion();
+    private final Private prvt = new Private();
+    private final String accessKeyId = prvt.getAccessKeyId();
+    private final String secretAccessKey = prvt.getSecretAccessKey();
+    private final String merchantId = prvt.getMerchantId();
+    private final String appName = prvt.getAppName();
+    private final String appVersion = prvt.getAppVersion();
     private final MarketplaceWebService service;
 
     public VTThread()
     {
-        Amws.dosyayaYaz("thread olusturuldu");
+        dosyayaYaz("thread olusturuldu");
+        cnfg = getCnfg();
 
         MarketplaceWebServiceConfig mws_config = new MarketplaceWebServiceConfig();
         mws_config.setServiceURL("https://mws.amazonservices.com");
@@ -76,9 +80,9 @@ public class VTThread extends Thread
             @Override
             public void run()
             {
-                Amws.dosyayaYaz("------------------islem basladi------------------");
+                dosyayaYaz("------------------islem basladi------------------");
 
-                Amws.dosyayaYaz("-----reportRequest basladi------");
+                dosyayaYaz("-----reportRequest basladi------");
                 List<YeniRaporIstek> listeYeniRaporIstek = yeniRaporIstekleriniKontrolEt();
                 if (!listeYeniRaporIstek.isEmpty())
                 {
@@ -87,17 +91,17 @@ public class VTThread extends Thread
                         reportRequest(listeYeniRaporIstek.get(i));
                     }
                 }
-                Amws.dosyayaYaz("-----reportRequest bitti------");
+                dosyayaYaz("-----reportRequest bitti------");
 
-                Amws.dosyayaYaz("-----getReportRequestList basladi------");
+                dosyayaYaz("-----getReportRequestList basladi------");
                 List<RaporIstek> listeRaporIstek = raporIstekleriniKontrolEt();
                 if (!listeRaporIstek.isEmpty())
                 {
                     getReportRequestList(listeRaporIstek);
                 }
-                Amws.dosyayaYaz("-----getReportRequestList bitti------");
+                dosyayaYaz("-----getReportRequestList bitti------");
 
-                Amws.dosyayaYaz("-----getReport basladi------");
+                dosyayaYaz("-----getReport basladi------");
                 List<RaporIstek> listeOlusanRapor = olusanRaporlariKontrolEt();
                 if (!listeOlusanRapor.isEmpty())
                 {
@@ -106,8 +110,8 @@ public class VTThread extends Thread
                         getReport(listeOlusanRapor.get(i));
                     }
                 }
-                Amws.dosyayaYaz("-----getReport bitti------");
-                Amws.dosyayaYaz("------------------islem bitti------------------");
+                dosyayaYaz("-----getReport bitti------");
+                dosyayaYaz("------------------islem bitti------------------");
             }
         }, 0, 60 * 1000);
     }
@@ -119,31 +123,31 @@ public class VTThread extends Thread
      */
     public Connection vtBaglantisiKur()
     {
-        Amws.dosyayaYaz("veritabani baglantisi kuruluyor");
+        dosyayaYaz("veritabani baglantisi kuruluyor");
 
         //vt baglanti stringi
-        String connectionUrl = "jdbc:sqlserver://" + cnfg.getVT_IP() + ";databaseName=" + cnfg.getVT_ISIM() + ";";
+        String connectionUrl = "jdbc:sqlserver://" + cnfg.getVT_IP() + ";databaseName=" + cnfg.getVT_DATABASE_NAME() + ";";
         Connection con = null;
 
         try
         {
             //vt baglantisi kuruluyor
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            con = DriverManager.getConnection(connectionUrl, cnfg.getVT_KULLANICI_ADI(), cnfg.getVT_SIFRE());
+            con = DriverManager.getConnection(connectionUrl, cnfg.getVT_USERNAME(), cnfg.getVT_PASSWORD());
 
-            Amws.dosyayaYaz("veritabani baglantisi kuruldu : conn : " + con);
+            dosyayaYaz("veritabani baglantisi kuruldu : conn : " + con);
         }
         catch (ClassNotFoundException e)
         {
-            Amws.dosyayaYaz("hata 1 : " + e.getMessage());
-            Amws.dosyayaYaz("veritabani baglantisi kurulurken hata olustu");
+            dosyayaYaz("hata 12 : " + e.getMessage());
+            dosyayaYaz("veritabani baglantisi kurulurken hata olustu");
         }
         catch (SQLException e)
         {
-            Amws.dosyayaYaz("hata 2 : " + e.getMessage());
-            Amws.dosyayaYaz("veritabani baglantisi kurulurken hata olustu");
+            dosyayaYaz("hata 13 : " + e.getMessage());
+            dosyayaYaz("veritabani baglantisi kurulurken hata olustu");
         }
-        Amws.dosyayaYaz("veritabani baglantisi kuruldu");
+        dosyayaYaz("veritabani baglantisi kuruldu");
 
         return con;
     }
@@ -155,7 +159,7 @@ public class VTThread extends Thread
      */
     public List<RaporIstek> olusanRaporlariKontrolEt()
     {
-        Amws.dosyayaYaz("yeni olusan raporlar veritabanında kontrol ediliyor");
+        dosyayaYaz("yeni olusan raporlar veritabanında kontrol ediliyor");
 
         List<RaporIstek> listeRaporIstek = new ArrayList<>();
         try
@@ -164,7 +168,7 @@ public class VTThread extends Thread
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
-                Amws.dosyayaYaz("yeni olusan rapor var : id : " + rs.getString("GENERATED_REPORT_ID"));
+                dosyayaYaz("yeni olusan rapor var : id : " + rs.getString("GENERATED_REPORT_ID"));
 
                 RaporIstek ri = new RaporIstek(rs.getInt("ID"), rs.getString("GENERATED_REPORT_ID"));
                 listeRaporIstek.add(ri);
@@ -172,10 +176,10 @@ public class VTThread extends Thread
         }
         catch (SQLException e)
         {
-            Amws.dosyayaYaz("hata 1 : " + e.getMessage());
-            Amws.dosyayaYaz("yeni olusan raporlar kontrol edilirken hata olustu");
+            dosyayaYaz("hata 1 : " + e.getMessage());
+            dosyayaYaz("yeni olusan raporlar kontrol edilirken hata olustu");
         }
-        Amws.dosyayaYaz("yeni olusan raporlar veritabanında kontrol edildi");
+        dosyayaYaz("yeni olusan raporlar veritabanında kontrol edildi");
 
         return listeRaporIstek;
     }
@@ -188,17 +192,18 @@ public class VTThread extends Thread
      */
     public void getReport(RaporIstek ri)
     {
-        Amws.dosyayaYaz("rapor bilgisayara kaydediliyor - get_report : generated_report_id : " + ri.getReportRequestID());
+        dosyayaYaz("rapor bilgisayara kaydediliyor - get_report : generated_report_id : " + ri.getReportRequestID());
 
         GetReportRequest request = new GetReportRequest();
         request.setMerchant(merchantId);
 
         request.setReportId(ri.getReportRequestID());
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmssS");
+        //DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmssS");
+        DateFormat dateFormat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
         Date date = new Date();
 
-        String dosyaIsmi = "report_" + ri.getReportRequestID() + "_" + dateFormat.format(date) + ".xml";
+        String dosyaIsmi = "report_" + ri.getReportRequestID() + dateFormat.format(date) + ".xml";
 
         try
         {
@@ -210,7 +215,7 @@ public class VTThread extends Thread
             String raporIcerigi = report.getDosyaIcerigi();
             String[] listeSatirlar = raporIcerigi.split("\n");
 
-            Amws.dosyayaYaz("rapor veritabanına kaydediliyor");
+            dosyayaYaz("rapor veritabanına kaydediliyor");
 
             Statement statement = conn.createStatement();
             String sorgu;
@@ -240,7 +245,7 @@ public class VTThread extends Thread
 
             statement.executeBatch();
 
-            Amws.dosyayaYaz("rapor kaydedildi");
+            dosyayaYaz("rapor kaydedildi");
 
 
             /*
@@ -314,13 +319,13 @@ public class VTThread extends Thread
         }
         catch (FileNotFoundException e)
         {
-            Amws.dosyayaYaz("hata 2 : " + e.getMessage());
-            Amws.dosyayaYaz("rapor kaydedilirken hata olustu");
+            dosyayaYaz("hata 2 : " + e.getMessage());
+            dosyayaYaz("rapor kaydedilirken hata olustu");
         }
         catch (MarketplaceWebServiceException ex)
         {
-            Amws.dosyayaYaz("hata 3 : " + ex.getMessage());
-            Amws.dosyayaYaz("rapor kaydedilirken hata olustu");
+            dosyayaYaz("hata 3 : " + ex.getMessage());
+            dosyayaYaz("rapor kaydedilirken hata olustu");
 
 //            System.out.println("Caught Exception: " + ex.getMessage());
 //            System.out.println("Response Status Code: " + ex.getStatusCode());
@@ -332,11 +337,11 @@ public class VTThread extends Thread
         }
         catch (SQLException e)
         {
-            Amws.dosyayaYaz("hata 4 : " + e.getMessage());
-            Amws.dosyayaYaz("rapor kaydedilirken hata olustu");
+            dosyayaYaz("hata 4 : " + e.getMessage());
+            dosyayaYaz("rapor kaydedilirken hata olustu");
         }
 
-        Amws.dosyayaYaz("rapor bilgisayara kaydedildi - get_report : generated_report_id : " + ri.getReportRequestID());
+        dosyayaYaz("rapor bilgisayara kaydedildi - get_report : generated_report_id : " + ri.getReportRequestID());
     }
 
     /**
@@ -346,7 +351,7 @@ public class VTThread extends Thread
      */
     public List<RaporIstek> raporIstekleriniKontrolEt()
     {
-        Amws.dosyayaYaz("yapılan rapor istekleri veritabanında kontrol ediliyor");
+        dosyayaYaz("yapılan rapor istekleri veritabanında kontrol ediliyor");
 
         List<RaporIstek> listeRaporIstek = new ArrayList<>();
 
@@ -356,7 +361,7 @@ public class VTThread extends Thread
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
-                Amws.dosyayaYaz("hazırlanan rapor bulundu : report_request_id : " + rs.getString("REPORT_REQUEST_ID"));
+                dosyayaYaz("hazırlanan rapor bulundu : report_request_id : " + rs.getString("REPORT_REQUEST_ID"));
 
                 RaporIstek ri = new RaporIstek(rs.getInt("ID"), rs.getString("REPORT_REQUEST_ID"));
                 listeRaporIstek.add(ri);
@@ -364,10 +369,10 @@ public class VTThread extends Thread
         }
         catch (SQLException e)
         {
-            Amws.dosyayaYaz("hata 5 : " + e.getMessage());
-            Amws.dosyayaYaz("yapılan rapor istekleri kontrol edilirken hata olustu");
+            dosyayaYaz("hata 5 : " + e.getMessage());
+            dosyayaYaz("yapılan rapor istekleri kontrol edilirken hata olustu");
         }
-        Amws.dosyayaYaz("yapılan rapor istekleri veritabanında kontrol edildi");
+        dosyayaYaz("yapılan rapor istekleri veritabanında kontrol edildi");
 
         return listeRaporIstek;
     }
@@ -380,7 +385,7 @@ public class VTThread extends Thread
      */
     public void getReportRequestList(List<RaporIstek> listeRaporIstek)
     {
-        Amws.dosyayaYaz("rapor isteklerinin durumları kontrol ediliyor - get_report_request_list");
+        dosyayaYaz("rapor isteklerinin durumları kontrol ediliyor - get_report_request_list");
 
         GetReportRequestListRequest request = new GetReportRequestListRequest();
         request.setMerchant(merchantId);
@@ -408,7 +413,7 @@ public class VTThread extends Thread
                     ReportRequestInfo reportRequestInfo = reportRequestInfoList.get(i);
                     if (reportRequestInfo.isSetReportProcessingStatus())
                     {
-                        Amws.dosyayaYaz("rapor isteginin durumu : vt_id : " + listeRaporIstek.get(i).getId() + " - report_request_id : " + listeRaporIstek.get(i).getReportRequestID() + " - status : " + reportRequestInfo.getReportProcessingStatus() + " - generated_status_id : " + reportRequestInfo.getGeneratedReportId());
+                        dosyayaYaz("rapor isteginin durumu : vt_id : " + listeRaporIstek.get(i).getId() + " - report_request_id : " + listeRaporIstek.get(i).getReportRequestID() + " - status : " + reportRequestInfo.getReportProcessingStatus() + " - generated_status_id : " + reportRequestInfo.getGeneratedReportId());
 
                         vtReportRequestListGuncelle(listeRaporIstek.get(i).getId(), reportRequestInfo);
                     }
@@ -417,8 +422,8 @@ public class VTThread extends Thread
         }
         catch (MarketplaceWebServiceException ex)
         {
-            Amws.dosyayaYaz("hata 6 : " + ex.getMessage());
-            Amws.dosyayaYaz("rapor isteklerinin durumları kontrol edilirken hata olustu");
+            dosyayaYaz("hata 6 : " + ex.getMessage());
+            dosyayaYaz("rapor isteklerinin durumları kontrol edilirken hata olustu");
 
 //            System.out.println("Caught Exception: " + ex.getMessage());
 //            System.out.println("Response Status Code: " + ex.getStatusCode());
@@ -429,7 +434,7 @@ public class VTThread extends Thread
 //            System.out.println("ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
         }
 
-        Amws.dosyayaYaz("rapor isteklerinin durumları kontrol edildi - get_report_request_list");
+        dosyayaYaz("rapor isteklerinin durumları kontrol edildi - get_report_request_list");
     }
 
     /**
@@ -440,7 +445,7 @@ public class VTThread extends Thread
      */
     public void vtReportRequestListGuncelle(int raporID, ReportRequestInfo rri)
     {
-        Amws.dosyayaYaz("rapor isteginin durumu veritabaninda guncelleniyor");
+        dosyayaYaz("rapor isteginin durumu veritabaninda guncelleniyor");
 
         try
         {
@@ -464,11 +469,11 @@ public class VTThread extends Thread
         }
         catch (SQLException e)
         {
-            Amws.dosyayaYaz("hata 7 : " + e.getMessage());
-            Amws.dosyayaYaz("veritabani guncellenirken hata olustu");
+            dosyayaYaz("hata 7 : " + e.getMessage());
+            dosyayaYaz("veritabani guncellenirken hata olustu");
         }
 
-        Amws.dosyayaYaz("rapor isteginin durumu veritabaninda guncellendi");
+        dosyayaYaz("rapor isteginin durumu veritabaninda guncellendi");
     }
 
     /**
@@ -478,7 +483,7 @@ public class VTThread extends Thread
      */
     public List<YeniRaporIstek> yeniRaporIstekleriniKontrolEt()
     {
-        Amws.dosyayaYaz("yeni rapor istekleri veritabanında kontrol ediliyor");
+        dosyayaYaz("yeni rapor istekleri veritabanında kontrol ediliyor");
 
         List<YeniRaporIstek> listeYeniRaporIstek = new ArrayList<>();
 
@@ -488,7 +493,7 @@ public class VTThread extends Thread
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
-                Amws.dosyayaYaz("yeni rapor istegi bulundu : vt_id : " + rs.getInt("ID") + " - start : " + rs.getString("START_DATE") + " - end : " + rs.getString("END_DATE") + " - report_type: " + rs.getString("REPORT_TYPE"));
+                dosyayaYaz("yeni rapor istegi bulundu : vt_id : " + rs.getInt("ID") + " - start : " + rs.getString("START_DATE") + " - end : " + rs.getString("END_DATE") + " - report_type: " + rs.getString("REPORT_TYPE"));
 
                 YeniRaporIstek ri = new YeniRaporIstek(rs.getInt("ID"), rs.getString("START_DATE"), rs.getString("END_DATE"), rs.getString("REPORT_TYPE"));
                 listeYeniRaporIstek.add(ri);
@@ -496,10 +501,10 @@ public class VTThread extends Thread
         }
         catch (SQLException e)
         {
-            Amws.dosyayaYaz("hata 8 : " + e.getMessage());
-            Amws.dosyayaYaz("yeni rapor istekleri kontrol edilirken hata olustu");
+            dosyayaYaz("hata 8 : " + e.getMessage());
+            dosyayaYaz("yeni rapor istekleri kontrol edilirken hata olustu");
         }
-        Amws.dosyayaYaz("yeni rapor istekleri veritabanında kontrol edildi");
+        dosyayaYaz("yeni rapor istekleri veritabanında kontrol edildi");
 
         return listeYeniRaporIstek;
     }
@@ -511,7 +516,7 @@ public class VTThread extends Thread
      */
     public void reportRequest(YeniRaporIstek ri)
     {
-        Amws.dosyayaYaz("sunucudan rapor istegi yapılıyor - request_report : vt_id : " + ri.getId());
+        dosyayaYaz("sunucudan rapor istegi yapılıyor - request_report : vt_id : " + ri.getId());
 
         int raporID = ri.getId();
         String baslangic = ri.getBaslangicTarihi();
@@ -578,7 +583,7 @@ public class VTThread extends Thread
                 {
                     ReportRequestInfo reportRequestInfo = requestReportResult.getReportRequestInfo();
 
-                    Amws.dosyayaYaz("rapor isteginin durumu : vt_id : " + raporID + " - report-request_id : " + reportRequestInfo.getReportRequestId() + " - status : " + reportRequestInfo.getReportProcessingStatus());
+                    dosyayaYaz("rapor isteginin durumu : vt_id : " + raporID + " - report-request_id : " + reportRequestInfo.getReportRequestId() + " - status : " + reportRequestInfo.getReportProcessingStatus());
 
                     vtRequestReportGuncelle(raporID, reportRequestInfo);
                 }
@@ -586,8 +591,8 @@ public class VTThread extends Thread
         }
         catch (MarketplaceWebServiceException ex)
         {
-            Amws.dosyayaYaz("hata 9 : " + ex.getMessage());
-            Amws.dosyayaYaz("sunucudan rapor istegi yapılırken hata olustu : vt_id: " + ri.getId());
+            dosyayaYaz("hata 9 : " + ex.getMessage());
+            dosyayaYaz("sunucudan rapor istegi yapılırken hata olustu : vt_id: " + ri.getId());
 
 //            System.out.println("Caught Exception: " + ex.getMessage());
 //            System.out.println("Response Status Code: " + ex.getStatusCode());
@@ -599,11 +604,11 @@ public class VTThread extends Thread
         }
         catch (ParseException e)
         {
-            Amws.dosyayaYaz("hata 10 : " + e.getMessage());
-            Amws.dosyayaYaz("sunucudan rapor istegi yapılırken hata olustu : vt_id: " + ri.getId());
+            dosyayaYaz("hata 10 : " + e.getMessage());
+            dosyayaYaz("sunucudan rapor istegi yapılırken hata olustu : vt_id: " + ri.getId());
         }
 
-        Amws.dosyayaYaz("sunucudan rapor istegi yapıldı : vt_id: " + ri.getId());
+        dosyayaYaz("sunucudan rapor istegi yapıldı : vt_id: " + ri.getId());
     }
 
     /**
@@ -614,7 +619,7 @@ public class VTThread extends Thread
      */
     public void vtRequestReportGuncelle(int raporID, ReportRequestInfo info)
     {
-        Amws.dosyayaYaz("rapor isteginin durumu veritabaninda guncelleniyor");
+        dosyayaYaz("rapor isteginin durumu veritabaninda guncelleniyor");
 
         SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         String submitDate = dateformat.format(info.getSubmittedDate().toGregorianCalendar().getTime());
@@ -631,10 +636,10 @@ public class VTThread extends Thread
         }
         catch (SQLException e)
         {
-            Amws.dosyayaYaz("hata 11 : " + e.getMessage());
-            Amws.dosyayaYaz("rapor isteginin durumu veritabaninda guncellenirken ");
+            dosyayaYaz("hata 11 : " + e.getMessage());
+            dosyayaYaz("rapor isteginin durumu veritabaninda guncellenirken ");
         }
 
-        Amws.dosyayaYaz("rapor isteginin durumu veritabaninda guncellendi");
+        dosyayaYaz("rapor isteginin durumu veritabaninda guncellendi");
     }
 }
