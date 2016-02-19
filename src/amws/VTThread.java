@@ -16,6 +16,7 @@ import com.amazonaws.mws.model.RequestReportRequest;
 import com.amazonaws.mws.model.RequestReportResponse;
 import com.amazonaws.mws.model.RequestReportResult;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -229,6 +230,7 @@ public class VTThread extends Thread
                 for (int j = 0; j < satirIcerigi.length; j++)
                 {
                     satirIcerigi[j] = satirIcerigi[j].replace("'", "''");
+                    satirIcerigi[j] = satirIcerigi[j].replaceAll("[\n\r]", "");
 
                     sorgu1 = sorgu1 + ", Column" + String.valueOf(j + 1);
                     sorgu2 = sorgu2 + ", '" + satirIcerigi[j] + "'";
@@ -237,6 +239,12 @@ public class VTThread extends Thread
                 sorgu1 = sorgu1 + ")";
                 sorgu2 = sorgu2 + ");";
                 sorgu = sorgu1 + sorgu2;
+
+                /*
+                PrintWriter out = new PrintWriter(new FileWriter("sorgu.txt", true), true);
+                out.write(sorgu + "\n");
+                out.close();
+                 */
                 statement.addBatch(sorgu);
             }
 
@@ -445,7 +453,7 @@ public class VTThread extends Thread
      */
     public void vtReportRequestListGuncelle(int raporID, ReportRequestInfo rri)
     {
-        dosyayaYaz("rapor isteginin durumu veritabaninda guncelleniyor");
+        dosyayaYaz("rapor isteginin durumu veritabaninda guncelleniyor 2 : " + rri.getReportProcessingStatus());
 
         try
         {
@@ -619,7 +627,7 @@ public class VTThread extends Thread
      */
     public void vtRequestReportGuncelle(int raporID, ReportRequestInfo info)
     {
-        dosyayaYaz("rapor isteginin durumu veritabaninda guncelleniyor");
+        dosyayaYaz("rapor isteginin durumu veritabaninda guncelleniyor 1 : " + info.getReportProcessingStatus());
 
         SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         String submitDate = dateformat.format(info.getSubmittedDate().toGregorianCalendar().getTime());
