@@ -41,10 +41,10 @@ public class Amws
     public static void dosyayaYaz(String log)
     {
         PrintWriter out = null;
+        Date date = new Date();
         try
         {
             out = new PrintWriter(new FileWriter("log.txt", true), true);
-            Date date = new Date();
             out.write(dateFormat.format(date) + " :: " + log + "\n");
             out.close();
 
@@ -52,6 +52,7 @@ public class Amws
         }
         catch (IOException ex)
         {
+            System.out.println(dateFormat.format(date) + " :: dosyaya yazarken hata olustu : " + ex.getMessage());
             Logger.getLogger(Amws.class.getName()).log(Level.SEVERE, null, ex);
         }
         finally
