@@ -12,8 +12,6 @@ import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Main extends Application
 {
@@ -24,14 +22,14 @@ public class Main extends Application
     public void start(Stage primaryStage) throws Exception
     {
 
-        dosyayaYaz("uygulama basladiddd");
+        dosyayaYaz("uygulama basladi");
 
-        Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("amws_report.fxml"));
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root, 300, 275));
         primaryStage.show();
 
-        dosyayaYaz("uygulama basladi");
+
         cnfg = new Config();
 
         if (cnfg.ayarlariOku())
@@ -55,6 +53,8 @@ public class Main extends Application
     public static void main(String[] args)
     {
         launch(args);
+        dosyayaYaz("uygulama bitti");
+        System.exit(0);
     }
 
     public static void dosyayaYaz(String log)
