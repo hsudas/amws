@@ -14,6 +14,8 @@ public class Config
     private String VT_DATABASE_NAME = "";
     private String ARCHIVE_FOLDER = "";
     private String FILE_NAME_FORMAT = "";
+    private String TABLE_REQUEST = "";
+    private String TABLE_CONTENTS = "";
 
     public boolean ayarlariOku()
     {
@@ -79,6 +81,12 @@ public class Config
             case "FILE_NAME_FORMAT":
                 setFILE_NAME_FORMAT(ayar[1]);
                 break;
+            case "TABLE_REQUEST":
+                setTABLE_REQUEST(ayar[1]);
+                break;
+            case "TABLE_CONTENTS":
+                setTABLE_CONTENTS(ayar[1]);
+                break;
             default:
                 break;
         }
@@ -114,6 +122,16 @@ public class Config
         else if (getFILE_NAME_FORMAT().isEmpty())
         {
             dosyayaYaz("FILE_NAME_FORMAT ayarı yok");
+            return false;
+        }
+        else if (getTABLE_REQUEST().isEmpty())
+        {
+            dosyayaYaz("TABLE_REQUEST ayarı yok");
+            return false;
+        }
+        else if (getTABLE_CONTENTS().isEmpty())
+        {
+            dosyayaYaz("TABLE_CONTENTS ayarı yok");
             return false;
         }
 
@@ -179,4 +197,25 @@ public class Config
     {
         this.FILE_NAME_FORMAT = FILE_NAME_FORMAT;
     }
+
+    public String getTABLE_REQUEST()
+    {
+        return TABLE_REQUEST;
+    }
+
+    public void setTABLE_REQUEST(String TABLE_REQUEST)
+    {
+        this.TABLE_REQUEST = TABLE_REQUEST;
+    }
+
+    public String getTABLE_CONTENTS()
+    {
+        return TABLE_CONTENTS;
+    }
+
+    public void setTABLE_CONTENTS(String TABLE_CONTENTS)
+    {
+        this.TABLE_CONTENTS = TABLE_CONTENTS;
+    }
+
 }

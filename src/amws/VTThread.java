@@ -83,7 +83,7 @@ public class VTThread extends Thread
             {
                 dosyayaYaz("------------------islem basladi------------------");
 
-                dosyayaYaz("-----reportRequest basladi------");
+                dosyayaYaz("-----report_ basladi------");
                 List<YeniRaporIstek> listeYeniRaporIstek = yeniRaporIstekleriniKontrolEt();
                 if (!listeYeniRaporIstek.isEmpty())
                 {
@@ -165,7 +165,9 @@ public class VTThread extends Thread
         List<RaporIstek> listeRaporIstek = new ArrayList<>();
         try
         {
-            PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS='_DONE_' AND (DOWNLOADED=0 OR DOWNLOADED IS NULL);");
+            //PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS='_DONE_' AND (DOWNLOADED=0 OR DOWNLOADED IS NULL);");
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID FROM "+ cnfg.getTABLE_REQUEST() +" WHERE STATUS='_DONE_' AND (DOWNLOADED=0 OR DOWNLOADED IS NULL);");
+
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
@@ -222,7 +224,8 @@ public class VTThread extends Thread
             String sorgu;
             for (int i = 0; i < listeSatirlar.length; i++)
             {
-                String sorgu1 = "INSERT INTO ROYAL.ROYAL.REPORT_CONTENTS (REPORT_ID, ROW_ID";
+                //String sorgu1 = "INSERT INTO ROYAL.ROYAL.REPORT_CONTENTS (REPORT_ID, ROW_ID";
+                String sorgu1 = "INSERT INTO "+ cnfg.getTABLE_CONTENTS() +" (REPORT_ID, ROW_ID";
                 String sorgu2 = "VALUES (" + ri.getReportRequestID() + ", " + String.valueOf(i);
 
                 String[] satirIcerigi = listeSatirlar[i].split("\t");
@@ -248,7 +251,7 @@ public class VTThread extends Thread
                 statement.addBatch(sorgu);
             }
 
-            String guncelleme = "UPDATE ROYAL.ROYAL.REPORT_REQUEST SET DOWNLOADED=1 WHERE ID=" + ri.getId() + ";";
+            String guncelleme = "UPDATE "+ cnfg.getTABLE_REQUEST() +" SET DOWNLOADED=1 WHERE ID=" + ri.getId() + ";";
             statement.addBatch(guncelleme);
 
             statement.executeBatch();
@@ -365,7 +368,7 @@ public class VTThread extends Thread
 
         try
         {
-            PreparedStatement pst = conn.prepareStatement("SELECT ID, REPORT_REQUEST_ID FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS='_SUBMITTED_' OR  STATUS='_IN_PROGRESS_';");
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, REPORT_REQUEST_ID FROM "+ cnfg.getTABLE_REQUEST() +" WHERE STATUS='_SUBMITTED_' OR  STATUS='_IN_PROGRESS_';");
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
@@ -459,7 +462,7 @@ public class VTThread extends Thread
         {
             if (rri.getReportProcessingStatus().equals("_DONE_"))
             {
-                PreparedStatement pst = conn.prepareStatement("UPDATE ROYAL.ROYAL.REPORT_REQUEST SET STATUS=?, GENERATED_REPORT_ID=? WHERE ID=?;");
+                PreparedStatement pst = conn.prepareStatement("UPDATE "+ cnfg.getTABLE_REQUEST() +" SET STATUS=?, GENERATED_REPORT_ID=? WHERE ID=?;");
                 pst.setString(1, rri.getReportProcessingStatus());
                 pst.setString(2, rri.getGeneratedReportId());
                 pst.setString(3, String.valueOf(raporID));
@@ -468,7 +471,7 @@ public class VTThread extends Thread
             }
             else
             {
-                PreparedStatement pst = conn.prepareStatement("UPDATE ROYAL.ROYAL.REPORT_REQUEST SET STATUS=? WHERE ID=?;");
+                PreparedStatement pst = conn.prepareStatement("UPDATE "+ cnfg.getTABLE_REQUEST() +" SET STATUS=? WHERE ID=?;");
                 pst.setString(1, rri.getReportProcessingStatus());
                 pst.setString(2, String.valueOf(raporID));
 
@@ -497,7 +500,7 @@ public class VTThread extends Thread
 
         try
         {
-            PreparedStatement pst = conn.prepareStatement("SELECT ID, START_DATE, END_DATE, REPORT_TYPE FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS IS NULL;");
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, START_DATE, END_DATE, REPORT_TYPE FROM "+ cnfg.getTABLE_REQUEST() +" WHERE STATUS IS NULL;");
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
@@ -634,7 +637,7 @@ public class VTThread extends Thread
 
         try
         {
-            PreparedStatement pst = conn.prepareStatement("UPDATE ROYAL.ROYAL.REPORT_REQUEST SET STATUS=?, SUBMIT_DATE=?, REPORT_REQUEST_ID=? WHERE ID=?;");
+            PreparedStatement pst = conn.prepareStatement("UPDATE "+ cnfg.getTABLE_REQUEST() +" SET STATUS=?, SUBMIT_DATE=?, REPORT_REQUEST_ID=? WHERE ID=?;");
             pst.setString(1, info.getReportProcessingStatus());
             pst.setString(2, submitDate);
             pst.setString(3, info.getReportRequestId());
