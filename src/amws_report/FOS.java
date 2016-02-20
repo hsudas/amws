@@ -1,4 +1,4 @@
-package amws;
+package amws_report;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

@@ -1,9 +1,11 @@
-package amws;
+package amws_report;
 
-import static amws.Amws.dosyayaYaz;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+
+import static amws_report.Main.dosyayaYaz;
 
 public class Config
 {

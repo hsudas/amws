@@ -1,4 +1,4 @@
-package amws;
+package amws_report;
 
 public class RaporIstek
 {

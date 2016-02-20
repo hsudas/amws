@@ -1,7 +1,5 @@
-package amws;
+package amws_report;
 
-import static amws.Amws.dosyayaYaz;
-import static amws.Amws.getCnfg;
 import com.amazonaws.mws.MarketplaceWebService;
 import com.amazonaws.mws.MarketplaceWebServiceClient;
 import com.amazonaws.mws.MarketplaceWebServiceConfig;
@@ -16,7 +14,6 @@ import com.amazonaws.mws.model.RequestReportRequest;
 import com.amazonaws.mws.model.RequestReportResponse;
 import com.amazonaws.mws.model.RequestReportResult;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -36,6 +33,9 @@ import java.util.TimerTask;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+
+import static amws_report.Main.dosyayaYaz;
+import static amws_report.Main.getCnfg;
 
 public class VTThread extends Thread
 {
