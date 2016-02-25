@@ -1,13 +1,19 @@
 package amws_report;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,12 +26,12 @@ import java.util.List;
 
 public class Main extends Application
 {
-    private static Controller cntrl;//arayüz sınıfı nesnesi
-    private static TableView tableView;
     private static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static Config cnfg;
-    private static ObservableList data;//tableView doldurmak için liste
+    private static Controller cntrl;//arayüz sınıfı nesnesi
+    private static TableView tableView;//fxml tableView bileseni
     private static List listTableView;//tableView doldurmak için liste
+    private static ComboBox cbRaporTuru;//fxml combobox bileseni
 
     public static void main(String[] args)
     {
@@ -77,17 +83,68 @@ public class Main extends Application
     public static void tableViewSatirEkle(String stn1, String stn2, String stn3, String stn4, String stn5, String stn6, String stn7, String stn8, String stn9)
     {
         listTableView.add(new ReportRequestTableView(stn1, stn2, stn3, stn4, stn5, stn6, stn7, stn8, stn9));
-        data = FXCollections.observableList(listTableView);
+        ObservableList data = FXCollections.observableList(listTableView);
         tableView.setItems(data);
     }
 
     /**
      * Config verilerine ulasabilmek icin nesne
+     *
      * @return
      */
     public static Config getCnfg()
     {
         return cnfg;
+    }
+
+    /**
+     * rapor turlerini combobox a ekler
+     */
+    public void cbRaporTuruDoldur()
+    {
+        RaporTuru rt = new RaporTuru();
+        List listeRaporTuru = rt.getListeRaporTuru();
+        ObservableList options = FXCollections.observableArrayList(listeRaporTuru);
+        cbRaporTuru.setItems(options);
+        cbRaporTuru.getSelectionModel().selectFirst();
+
+        //combobox a RaporTuru nesnesi ekleniyor. burada item toString() deki deger e guncelleniyor
+        cbRaporTuru.setCellFactory(new Callback<ListView<RaporTuru>, ListCell<RaporTuru>>()
+        {
+            @Override
+            public ListCell<RaporTuru> call(ListView<RaporTuru> p)
+            {
+                final ListCell<RaporTuru> cell = new ListCell<RaporTuru>()
+                {
+                    @Override
+                    protected void updateItem(RaporTuru t, boolean bln)
+                    {
+                        super.updateItem(t, bln);
+
+                        if (t != null)
+                        {
+                            setText(t.toString());//combobox ta gozukecek yazi
+                        }
+                        else
+                        {
+                            setText(null);
+                        }
+                    }
+                };
+                return cell;
+            }
+        });
+
+        //item secimi yapılınca buraya geliyor
+        cbRaporTuru.valueProperty().addListener(new ChangeListener()
+        {
+            @Override
+            public void changed(ObservableValue observableValue, Object o, Object t1)
+            {
+                RaporTuru rt = (RaporTuru) cbRaporTuru.getSelectionModel().getSelectedItem();
+                System.out.println("crin : " + rt.getCirkin());
+            }
+        });
     }
 
     @Override
@@ -99,6 +156,7 @@ public class Main extends Application
         Parent root = fxmlLoader.load();
         cntrl = fxmlLoader.getController();
         tableView = (TableView) root.lookup("#grid");
+        cbRaporTuru = (ComboBox) root.lookup("#cbRaporTuru");
 
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root, 500, 500));
@@ -107,7 +165,8 @@ public class Main extends Application
         primaryStage.show();
 
         cntrl.initTableView();
-
+        cbRaporTuruDoldur();
+        
         if (cnfg.ayarlariOku())
         {
             if (!cnfg.ayarlariKontrolEt())

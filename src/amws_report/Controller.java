@@ -3,10 +3,7 @@ package amws_report;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 public class Controller
@@ -36,6 +33,8 @@ public class Controller
     public TableColumn col8;
     @FXML
     public TableColumn col9;
+    @FXML
+    public ComboBox cbRaporTuru;
 
     public Controller()
     {
