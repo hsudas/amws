@@ -19,5 +19,6 @@
     <orderEntry type="library" name="jsr173_1.0_api" level="project" />
     <orderEntry type="library" name="log4j-1.2.14" level="project" />
     <orderEntry type="library" name="sqljdbc42" level="project" />
+    <orderEntry type="library" name="jfxtras-common-8.0-r4" level="project" />
   </component>
 </module>
