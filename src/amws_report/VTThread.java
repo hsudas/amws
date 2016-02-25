@@ -34,8 +34,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import static amws_report.Main.dosyayaYaz;
-import static amws_report.Main.getCnfg;
+import static amws_report.Main.*;
 
 public class VTThread extends Thread
 {
@@ -83,6 +82,9 @@ public class VTThread extends Thread
             {
                 dosyayaYaz("------------------islem basladi------------------");
 
+
+                reportRequestTableViewGuncelle();
+
                 dosyayaYaz("-----report_ basladi------");
                 List<YeniRaporIstek> listeYeniRaporIstek = yeniRaporIstekleriniKontrolEt();
                 if (!listeYeniRaporIstek.isEmpty())
@@ -95,7 +97,7 @@ public class VTThread extends Thread
                 dosyayaYaz("-----reportRequest bitti------");
 
                 dosyayaYaz("-----getReportRequestList basladi------");
-                List<RaporIstek> listeRaporIstek = raporIstekleriniKontrolEt();
+                List<Rapor> listeRaporIstek = raporIstekleriniKontrolEt();
                 if (!listeRaporIstek.isEmpty())
                 {
                     getReportRequestList(listeRaporIstek);
@@ -103,7 +105,7 @@ public class VTThread extends Thread
                 dosyayaYaz("-----getReportRequestList bitti------");
 
                 dosyayaYaz("-----getReport basladi------");
-                List<RaporIstek> listeOlusanRapor = olusanRaporlariKontrolEt();
+                List<Rapor> listeOlusanRapor = olusanRaporlariKontrolEt();
                 if (!listeOlusanRapor.isEmpty())
                 {
                     for (int i = 0; i < listeOlusanRapor.size(); i++)
@@ -154,15 +156,47 @@ public class VTThread extends Thread
     }
 
     /**
+     * reportRequest tablo icerigini tableView a yazar
+     */
+    public void reportRequestTableViewGuncelle()
+    {
+        dosyayaYaz("TableView guncelleniyor");
+        try
+        {
+            listTableViewTemizle();
+            PreparedStatement pst = conn.prepareStatement("SELECT START_DATE, END_DATE, REPORT_TYPE, SUBMIT_DATE, STATUS, REPORT_REQUEST_ID, GENERATED_REPORT_ID, DOWNLOADED, DOWNLOAD_TYPE FROM "+ cnfg.getTABLE_REQUEST());
+            ResultSet rs = pst.executeQuery();
+            while (rs.next())
+            {
+                tableViewSatirEkle(rs.getString("START_DATE"),
+                                   rs.getString("END_DATE"),
+                                   rs.getString("REPORT_TYPE"),
+                                   rs.getString("SUBMIT_DATE"),
+                                   rs.getString("STATUS"),
+                                   rs.getString("REPORT_REQUEST_ID"),
+                                   rs.getString("GENERATED_REPORT_ID"),
+                                   rs.getString("DOWNLOADED"),
+                                   rs.getString("DOWNLOAD_TYPE"));
+            }
+        }
+        catch (SQLException e)
+        {
+            dosyayaYaz("hata 16 : " + e.getMessage());
+            dosyayaYaz("TableView guncellenirken hata olustu");
+        }
+        dosyayaYaz("TableView guncellendi");
+    }
+
+    /**
      * status u _DONE_ downloaded ı 1 olmayan kayıtların bilgilerini alir
      *
      * @return
      */
-    public List<RaporIstek> olusanRaporlariKontrolEt()
+    public List<Rapor> olusanRaporlariKontrolEt()
     {
         dosyayaYaz("yeni olusan raporlar veritabanında kontrol ediliyor");
 
-        List<RaporIstek> listeRaporIstek = new ArrayList<>();
+        List<Rapor> listeRaporIstek = new ArrayList<>();
         try
         {
             //PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS='_DONE_' AND (DOWNLOADED=0 OR DOWNLOADED IS NULL);");
@@ -173,7 +207,7 @@ public class VTThread extends Thread
             {
                 dosyayaYaz("yeni olusan rapor var : id : " + rs.getString("GENERATED_REPORT_ID"));
 
-                RaporIstek ri = new RaporIstek(rs.getInt("ID"), rs.getString("GENERATED_REPORT_ID"));
+                Rapor ri = new Rapor(rs.getInt("ID"), rs.getString("GENERATED_REPORT_ID"));
                 listeRaporIstek.add(ri);
             }
         }
@@ -193,7 +227,7 @@ public class VTThread extends Thread
      *
      * @param ri : rapor istek nesnesi
      */
-    public void getReport(RaporIstek ri)
+    public void getReport(Rapor ri)
     {
         dosyayaYaz("rapor bilgisayara kaydediliyor - get_report : generated_report_id : " + ri.getReportRequestID());
 
@@ -360,11 +394,11 @@ public class VTThread extends Thread
      *
      * @return
      */
-    public List<RaporIstek> raporIstekleriniKontrolEt()
+    public List<Rapor> raporIstekleriniKontrolEt()
     {
         dosyayaYaz("yapılan rapor istekleri veritabanında kontrol ediliyor");
 
-        List<RaporIstek> listeRaporIstek = new ArrayList<>();
+        List<Rapor> listeRaporIstek = new ArrayList<>();
 
         try
         {
@@ -374,7 +408,7 @@ public class VTThread extends Thread
             {
                 dosyayaYaz("hazırlanan rapor bulundu : report_request_id : " + rs.getString("REPORT_REQUEST_ID"));
 
-                RaporIstek ri = new RaporIstek(rs.getInt("ID"), rs.getString("REPORT_REQUEST_ID"));
+                Rapor ri = new Rapor(rs.getInt("ID"), rs.getString("REPORT_REQUEST_ID"));
                 listeRaporIstek.add(ri);
             }
         }
@@ -394,7 +428,7 @@ public class VTThread extends Thread
      * @param listeRaporIstek : ReportRequestList isleminde sorulacak raporların
      * verileri
      */
-    public void getReportRequestList(List<RaporIstek> listeRaporIstek)
+    public void getReportRequestList(List<Rapor> listeRaporIstek)
     {
         dosyayaYaz("rapor isteklerinin durumları kontrol ediliyor - get_report_request_list");
 
