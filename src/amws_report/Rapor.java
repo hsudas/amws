@@ -1,15 +1,21 @@
 package amws_report;
 
-public class RaporIstek
+public class Rapor
 {
 
     private int id;
     private String reportRequestID;
+    private String generatedReportID;
 
-    public RaporIstek(int id, String reportRequestID)
+    public Rapor(int id, String reportRequestID)
     {
         this.id = id;
         this.reportRequestID = reportRequestID;
+    }
+
+    public String getGeneratedReportID()
+    {
+        return generatedReportID;
     }
 
     public int getId()
