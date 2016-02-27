@@ -18,6 +18,7 @@ public class Config
     private String FILE_NAME_FORMAT = "";
     private String TABLE_REQUEST = "";
     private String TABLE_CONTENTS = "";
+    private String TABLE_SCHEDULE = "";
 
     public boolean ayarlariOku()
     {
@@ -89,6 +90,9 @@ public class Config
             case "TABLE_CONTENTS":
                 setTABLE_CONTENTS(ayar[1]);
                 break;
+            case "TABLE_SCHEDULE":
+                setTABLE_SCHEDULE(ayar[1]);
+                break;
             default:
                 break;
         }
@@ -136,7 +140,11 @@ public class Config
             dosyayaYaz("TABLE_CONTENTS ayarı yok");
             return false;
         }
-
+        else if (getTABLE_SCHEDULE().isEmpty())
+        {
+            dosyayaYaz("TABLE_SCHEDULE ayarı yok");
+            return false;
+        }
         return true;
     }
 
@@ -220,4 +228,13 @@ public class Config
         this.TABLE_CONTENTS = TABLE_CONTENTS;
     }
 
+    public String getTABLE_SCHEDULE()
+    {
+        return TABLE_SCHEDULE;
+    }
+
+    public void setTABLE_SCHEDULE(String TABLE_SCHEDULE)
+    {
+        this.TABLE_SCHEDULE = TABLE_SCHEDULE;
+    }
 }
