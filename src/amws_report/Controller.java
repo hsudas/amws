@@ -5,12 +5,13 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import jfxtras.scene.control.LocalTimePicker;
 
 public class Controller
 {
 
     @FXML
-    public Button btnRequestReport;
+    public Button btnRaporIstek;
     @FXML
     public TextArea txtLog;
     @FXML
@@ -35,6 +36,14 @@ public class Controller
     public TableColumn col9;
     @FXML
     public ComboBox cbRaporTuru;
+    @FXML
+    public DatePicker dpBaslangicTarih;
+    @FXML
+    public DatePicker dpBitisTarih;
+    @FXML
+    public LocalTimePicker tpBaslangic;
+    @FXML
+    public LocalTimePicker tpBitis;
 
     public Controller()
     {
@@ -55,9 +64,10 @@ public class Controller
     }
 
     @FXML
-    public void btnRequestReportTiklandi(ActionEvent event)
+    public void btnRaporIstekTiklandi(ActionEvent event)
     {
         System.out.println("tiklandi");
+        //reportRequestKayitEkle();
     }
 
     @FXML

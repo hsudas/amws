@@ -5,21 +5,23 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import jfxtras.scene.control.LocalTimePicker;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,12 +34,21 @@ public class Main extends Application
     private static TableView tableView;//fxml tableView bileseni
     private static List listTableView;//tableView doldurmak için liste
     private static ComboBox cbRaporTuru;//fxml combobox bileseni
+    private static Button btnRaporIstek;//fxml combobox bileseni
+    private static List<YeniRaporIstek> listeRaporIstek;//arayüzden yapılan rapor isteklerini tutmak için liste
+    private static YeniRaporIstek yri;
+    private static DatePicker dpBaslangicTarih;
+    private static DatePicker dpBitisTarih;
+    private static LocalTimePicker tpBaslangic;
+    private static LocalTimePicker tpBitis;
 
     public static void main(String[] args)
     {
         listTableView = new ArrayList();
         cntrl = new Controller();
         cnfg = new Config();
+        listeRaporIstek = new ArrayList<>();
+        yri = new YeniRaporIstek();
 
         launch(args);
         dosyayaYaz("uygulama bitti");
@@ -95,6 +106,16 @@ public class Main extends Application
     public static Config getCnfg()
     {
         return cnfg;
+    }
+
+    public void reportRequestKayitEkle()
+    {
+        yri.setTip(((RaporTuru) cbRaporTuru.getSelectionModel().getSelectedItem()).getCirkin());
+        yri.setBaslangicTarihi(dpBaslangicTarih.getValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + " " + tpBaslangic.getLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")) + ":00");
+        yri.setBitisTarihi(dpBitisTarih.getValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + " " + tpBitis.getLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")) + ":00");
+
+        VtInsertThread vtInsertThread = new VtInsertThread(yri);
+        vtInsertThread.start();
     }
 
     /**
@@ -157,6 +178,23 @@ public class Main extends Application
         cntrl = fxmlLoader.getController();
         tableView = (TableView) root.lookup("#grid");
         cbRaporTuru = (ComboBox) root.lookup("#cbRaporTuru");
+        dpBaslangicTarih = (DatePicker) root.lookup("#dpBaslangicTarih");
+        dpBitisTarih = (DatePicker) root.lookup("#dpBitisTarih");
+        tpBaslangic = (LocalTimePicker) root.lookup("#tpBaslangic");
+        tpBitis = (LocalTimePicker) root.lookup("#tpBitis");
+        btnRaporIstek = (Button) root.lookup("#btnRaporIstek");
+        dpBaslangicTarih.setValue(LocalDate.now());
+        dpBitisTarih.setValue(LocalDate.now());
+
+        btnRaporIstek.setOnMouseClicked(new EventHandler<MouseEvent>()
+        {
+            @Override
+            public void handle(MouseEvent mouseEvent)
+            {
+                System.out.println("tiklandi : " + mouseEvent);
+                reportRequestKayitEkle();
+            }
+        });
 
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root, 500, 500));
@@ -166,7 +204,7 @@ public class Main extends Application
 
         cntrl.initTableView();
         cbRaporTuruDoldur();
-        
+
         if (cnfg.ayarlariOku())
         {
             if (!cnfg.ayarlariKontrolEt())
@@ -181,7 +219,7 @@ public class Main extends Application
             System.exit(0);
         }
 
-        VTThread vtThread = new VTThread();
-        vtThread.start();
+        VtMainThread vtMainThread = new VtMainThread();
+        vtMainThread.start();
     }
 }

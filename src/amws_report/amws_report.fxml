@@ -40,7 +40,7 @@
                <GridPane.margin>
                   <Insets left="5.0" right="5.0" />
                </GridPane.margin></ComboBox>
-            <DatePicker GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.vgrow="NEVER">
+            <DatePicker fx:id="dpBaslangicTarih" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.vgrow="NEVER">
                <padding>
                   <Insets left="5.0" right="5.0" />
                </padding>
@@ -51,14 +51,14 @@
                <GridPane.margin>
                   <Insets left="5.0" right="5.0" />
                </GridPane.margin></Label>
-            <DatePicker GridPane.columnIndex="1" GridPane.rowIndex="2">
+            <DatePicker fx:id="dpBitisTarih" GridPane.columnIndex="1" GridPane.rowIndex="2">
                <padding>
                   <Insets left="5.0" right="5.0" />
                </padding>
                <GridPane.margin>
                   <Insets left="5.0" right="5.0" />
                </GridPane.margin></DatePicker>
-            <Button fx:id="btnRequestReport" mnemonicParsing="false" onAction="#btnRequestReportTiklandi" prefHeight="26.0" prefWidth="164.0" text="Request Report" GridPane.columnIndex="2">
+            <Button fx:id="btnRaporIstek" mnemonicParsing="false" onAction="#btnRaporIstekTiklandi" prefHeight="26.0" prefWidth="164.0" text="Request Report" GridPane.columnIndex="2">
                <padding>
                   <Insets left="5.0" right="5.0" />
                </padding>
@@ -66,8 +66,8 @@
                   <Insets left="5.0" right="5.0" />
                </GridPane.margin>
             </Button>
-            <LocalTimePicker GridPane.columnIndex="2" GridPane.rowIndex="1" GridPane.vgrow="NEVER" />
-            <LocalTimePicker GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.vgrow="NEVER" />
+            <LocalTimePicker fx:id="tpBaslangic" GridPane.columnIndex="2" GridPane.rowIndex="1" GridPane.vgrow="NEVER" />
+            <LocalTimePicker fx:id="tpBitis" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.vgrow="NEVER" />
             <TableView fx:id="grid" prefHeight="200.0" prefWidth="200.0" GridPane.columnSpan="2147483647" GridPane.rowIndex="3">
               <columns>
                 <TableColumn fx:id="col1" prefWidth="100.0" text="START DATE" />

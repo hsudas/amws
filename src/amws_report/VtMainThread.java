@@ -4,43 +4,27 @@ import com.amazonaws.mws.MarketplaceWebService;
 import com.amazonaws.mws.MarketplaceWebServiceClient;
 import com.amazonaws.mws.MarketplaceWebServiceConfig;
 import com.amazonaws.mws.MarketplaceWebServiceException;
-import com.amazonaws.mws.model.GetReportRequest;
-import com.amazonaws.mws.model.GetReportRequestListRequest;
-import com.amazonaws.mws.model.GetReportRequestListResponse;
-import com.amazonaws.mws.model.GetReportRequestListResult;
-import com.amazonaws.mws.model.IdList;
-import com.amazonaws.mws.model.ReportRequestInfo;
-import com.amazonaws.mws.model.RequestReportRequest;
-import com.amazonaws.mws.model.RequestReportResponse;
-import com.amazonaws.mws.model.RequestReportResult;
-import java.io.FileNotFoundException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import com.amazonaws.mws.model.*;
+
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.io.FileNotFoundException;
+import java.sql.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Date;
 
-import static amws_report.Main.*;
+import static amws_report.Main.dosyayaYaz;
+import static amws_report.Main.getCnfg;
+import static amws_report.Veritabani.reportRequestTableViewGuncelle;
+import static amws_report.Veritabani.vtBaglantisiKur;
 
-public class VTThread extends Thread
+public class VtMainThread extends Thread
 {
 
-    private Config cnfg = null;
-    private Connection conn = null;
     private final Private prvt = new Private();
     private final String accessKeyId = prvt.getAccessKeyId();
     private final String secretAccessKey = prvt.getSecretAccessKey();
@@ -48,10 +32,12 @@ public class VTThread extends Thread
     private final String appName = prvt.getAppName();
     private final String appVersion = prvt.getAppVersion();
     private final MarketplaceWebService service;
+    private Config cnfg = null;
+    private Connection conn = null;
 
-    public VTThread()
+    public VtMainThread()
     {
-        dosyayaYaz("thread olusturuldu");
+        dosyayaYaz("ana thread olusturuldu");
         cnfg = getCnfg();
 
         MarketplaceWebServiceConfig mws_config = new MarketplaceWebServiceConfig();
@@ -62,7 +48,7 @@ public class VTThread extends Thread
     @Override
     public void run()
     {
-        conn = vtBaglantisiKur();
+        conn = vtBaglantisiKur(cnfg);
         if (conn != null)
         {
             sayacKur();
@@ -82,8 +68,7 @@ public class VTThread extends Thread
             {
                 dosyayaYaz("------------------islem basladi------------------");
 
-
-                reportRequestTableViewGuncelle();
+                reportRequestTableViewGuncelle(conn, cnfg);
 
                 dosyayaYaz("-----report_ basladi------");
                 List<YeniRaporIstek> listeYeniRaporIstek = yeniRaporIstekleriniKontrolEt();
@@ -96,6 +81,8 @@ public class VTThread extends Thread
                 }
                 dosyayaYaz("-----reportRequest bitti------");
 
+                reportRequestTableViewGuncelle(conn, cnfg);
+
                 dosyayaYaz("-----getReportRequestList basladi------");
                 List<Rapor> listeRaporIstek = raporIstekleriniKontrolEt();
                 if (!listeRaporIstek.isEmpty())
@@ -103,6 +90,8 @@ public class VTThread extends Thread
                     getReportRequestList(listeRaporIstek);
                 }
                 dosyayaYaz("-----getReportRequestList bitti------");
+
+                reportRequestTableViewGuncelle(conn, cnfg);
 
                 dosyayaYaz("-----getReport basladi------");
                 List<Rapor> listeOlusanRapor = olusanRaporlariKontrolEt();
@@ -114,77 +103,12 @@ public class VTThread extends Thread
                     }
                 }
                 dosyayaYaz("-----getReport bitti------");
+
+                reportRequestTableViewGuncelle(conn, cnfg);
+
                 dosyayaYaz("------------------islem bitti------------------");
             }
         }, 0, 60 * 1000);
-    }
-
-    /**
-     * vt ye baglanir
-     *
-     * @return vt connection nesnesi
-     */
-    public Connection vtBaglantisiKur()
-    {
-        dosyayaYaz("veritabani baglantisi kuruluyor");
-
-        //vt baglanti stringi
-        String connectionUrl = "jdbc:sqlserver://" + cnfg.getVT_IP() + ";databaseName=" + cnfg.getVT_DATABASE_NAME() + ";";
-        Connection con = null;
-
-        try
-        {
-            //vt baglantisi kuruluyor
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            con = DriverManager.getConnection(connectionUrl, cnfg.getVT_USERNAME(), cnfg.getVT_PASSWORD());
-
-            dosyayaYaz("veritabani baglantisi kuruldu : conn : " + con);
-        }
-        catch (ClassNotFoundException e)
-        {
-            dosyayaYaz("hata 12 : " + e.getMessage());
-            dosyayaYaz("veritabani baglantisi kurulurken hata olustu");
-        }
-        catch (SQLException e)
-        {
-            dosyayaYaz("hata 13 : " + e.getMessage());
-            dosyayaYaz("veritabani baglantisi kurulurken hata olustu");
-        }
-        dosyayaYaz("veritabani baglantisi kuruldu");
-
-        return con;
-    }
-
-    /**
-     * reportRequest tablo icerigini tableView a yazar
-     */
-    public void reportRequestTableViewGuncelle()
-    {
-        dosyayaYaz("TableView guncelleniyor");
-        try
-        {
-            listTableViewTemizle();
-            PreparedStatement pst = conn.prepareStatement("SELECT START_DATE, END_DATE, REPORT_TYPE, SUBMIT_DATE, STATUS, REPORT_REQUEST_ID, GENERATED_REPORT_ID, DOWNLOADED, DOWNLOAD_TYPE FROM "+ cnfg.getTABLE_REQUEST());
-            ResultSet rs = pst.executeQuery();
-            while (rs.next())
-            {
-                tableViewSatirEkle(rs.getString("START_DATE"),
-                                   rs.getString("END_DATE"),
-                                   rs.getString("REPORT_TYPE"),
-                                   rs.getString("SUBMIT_DATE"),
-                                   rs.getString("STATUS"),
-                                   rs.getString("REPORT_REQUEST_ID"),
-                                   rs.getString("GENERATED_REPORT_ID"),
-                                   rs.getString("DOWNLOADED"),
-                                   rs.getString("DOWNLOAD_TYPE"));
-            }
-        }
-        catch (SQLException e)
-        {
-            dosyayaYaz("hata 16 : " + e.getMessage());
-            dosyayaYaz("TableView guncellenirken hata olustu");
-        }
-        dosyayaYaz("TableView guncellendi");
     }
 
     /**
@@ -200,7 +124,7 @@ public class VTThread extends Thread
         try
         {
             //PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS='_DONE_' AND (DOWNLOADED=0 OR DOWNLOADED IS NULL);");
-            PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID FROM "+ cnfg.getTABLE_REQUEST() +" WHERE STATUS='_DONE_' AND (DOWNLOADED=0 OR DOWNLOADED IS NULL);");
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID FROM " + cnfg.getTABLE_REQUEST() + " WHERE STATUS='_DONE_' AND (DOWNLOADED=0 OR DOWNLOADED IS NULL);");
 
             ResultSet rs = pst.executeQuery();
             while (rs.next())
@@ -259,7 +183,7 @@ public class VTThread extends Thread
             for (int i = 0; i < listeSatirlar.length; i++)
             {
                 //String sorgu1 = "INSERT INTO ROYAL.ROYAL.REPORT_CONTENTS (REPORT_ID, ROW_ID";
-                String sorgu1 = "INSERT INTO "+ cnfg.getTABLE_CONTENTS() +" (REPORT_ID, ROW_ID";
+                String sorgu1 = "INSERT INTO " + cnfg.getTABLE_CONTENTS() + " (REPORT_ID, ROW_ID";
                 String sorgu2 = "VALUES (" + ri.getReportRequestID() + ", " + String.valueOf(i);
 
                 String[] satirIcerigi = listeSatirlar[i].split("\t");
@@ -285,7 +209,7 @@ public class VTThread extends Thread
                 statement.addBatch(sorgu);
             }
 
-            String guncelleme = "UPDATE "+ cnfg.getTABLE_REQUEST() +" SET DOWNLOADED=1 WHERE ID=" + ri.getId() + ";";
+            String guncelleme = "UPDATE " + cnfg.getTABLE_REQUEST() + " SET DOWNLOADED=1 WHERE ID=" + ri.getId() + ";";
             statement.addBatch(guncelleme);
 
             statement.executeBatch();
@@ -402,7 +326,7 @@ public class VTThread extends Thread
 
         try
         {
-            PreparedStatement pst = conn.prepareStatement("SELECT ID, REPORT_REQUEST_ID FROM "+ cnfg.getTABLE_REQUEST() +" WHERE STATUS='_SUBMITTED_' OR  STATUS='_IN_PROGRESS_';");
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, REPORT_REQUEST_ID FROM " + cnfg.getTABLE_REQUEST() + " WHERE STATUS='_SUBMITTED_' OR  STATUS='_IN_PROGRESS_';");
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
@@ -426,7 +350,7 @@ public class VTThread extends Thread
      * amws e baglanip ReportRequestList islemi yapar
      *
      * @param listeRaporIstek : ReportRequestList isleminde sorulacak raporların
-     * verileri
+     *                        verileri
      */
     public void getReportRequestList(List<Rapor> listeRaporIstek)
     {
@@ -486,7 +410,7 @@ public class VTThread extends Thread
      * ReportRequestList sonucu alindiktan sonra vt de gerekli yerleri gunceller
      *
      * @param raporID : vt id si
-     * @param rri : ReportRequestList sonucu
+     * @param rri     : ReportRequestList sonucu
      */
     public void vtReportRequestListGuncelle(int raporID, ReportRequestInfo rri)
     {
@@ -496,7 +420,7 @@ public class VTThread extends Thread
         {
             if (rri.getReportProcessingStatus().equals("_DONE_"))
             {
-                PreparedStatement pst = conn.prepareStatement("UPDATE "+ cnfg.getTABLE_REQUEST() +" SET STATUS=?, GENERATED_REPORT_ID=? WHERE ID=?;");
+                PreparedStatement pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_REQUEST() + " SET STATUS=?, GENERATED_REPORT_ID=? WHERE ID=?;");
                 pst.setString(1, rri.getReportProcessingStatus());
                 pst.setString(2, rri.getGeneratedReportId());
                 pst.setString(3, String.valueOf(raporID));
@@ -505,7 +429,7 @@ public class VTThread extends Thread
             }
             else
             {
-                PreparedStatement pst = conn.prepareStatement("UPDATE "+ cnfg.getTABLE_REQUEST() +" SET STATUS=? WHERE ID=?;");
+                PreparedStatement pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_REQUEST() + " SET STATUS=? WHERE ID=?;");
                 pst.setString(1, rri.getReportProcessingStatus());
                 pst.setString(2, String.valueOf(raporID));
 
@@ -534,7 +458,7 @@ public class VTThread extends Thread
 
         try
         {
-            PreparedStatement pst = conn.prepareStatement("SELECT ID, START_DATE, END_DATE, REPORT_TYPE FROM "+ cnfg.getTABLE_REQUEST() +" WHERE STATUS IS NULL;");
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, START_DATE, END_DATE, REPORT_TYPE FROM " + cnfg.getTABLE_REQUEST() + " WHERE STATUS IS NULL;");
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
@@ -660,7 +584,7 @@ public class VTThread extends Thread
      * requestReport tan sonra gelen bilgilerle vt yi gunceller
      *
      * @param raporID : requestReport tun vt deki id si
-     * @param info : amws den gelen requestReport cevabı
+     * @param info    : amws den gelen requestReport cevabı
      */
     public void vtRequestReportGuncelle(int raporID, ReportRequestInfo info)
     {
@@ -671,7 +595,7 @@ public class VTThread extends Thread
 
         try
         {
-            PreparedStatement pst = conn.prepareStatement("UPDATE "+ cnfg.getTABLE_REQUEST() +" SET STATUS=?, SUBMIT_DATE=?, REPORT_REQUEST_ID=? WHERE ID=?;");
+            PreparedStatement pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_REQUEST() + " SET STATUS=?, SUBMIT_DATE=?, REPORT_REQUEST_ID=? WHERE ID=?;");
             pst.setString(1, info.getReportProcessingStatus());
             pst.setString(2, submitDate);
             pst.setString(3, info.getReportRequestId());
@@ -686,5 +610,10 @@ public class VTThread extends Thread
         }
 
         dosyayaYaz("rapor isteginin durumu veritabaninda guncellendi");
+    }
+
+    public Connection getConn()
+    {
+        return conn;
     }
 }

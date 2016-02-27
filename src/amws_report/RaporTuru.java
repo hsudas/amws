@@ -96,7 +96,6 @@ public class RaporTuru
     public String toString()
     {
         return guzel;
-        //return super.toString();
     }
 
     public List getListeRaporTuru()

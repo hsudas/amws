@@ -16,6 +16,10 @@ public class YeniRaporIstek
         this.tip = tip;
     }
 
+    public YeniRaporIstek()
+    {
+    }
+
     public int getId()
     {
         return id;
@@ -26,13 +30,28 @@ public class YeniRaporIstek
         return baslangicTarihi;
     }
 
+    public void setBaslangicTarihi(String baslangicTarihi)
+    {
+        this.baslangicTarihi = baslangicTarihi;
+    }
+
     public String getBitisTarihi()
     {
         return bitisTarihi;
     }
 
+    public void setBitisTarihi(String bitisTarihi)
+    {
+        this.bitisTarihi = bitisTarihi;
+    }
+
     public String getTip()
     {
         return tip;
+    }
+
+    public void setTip(String tip)
+    {
+        this.tip = tip;
     }
 }
