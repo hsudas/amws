@@ -54,4 +54,9 @@ public class YeniRaporIstek
     {
         this.tip = tip;
     }
+
+    public void setId(int id)
+    {
+        this.id = id;
+    }
 }

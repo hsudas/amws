@@ -70,6 +70,8 @@ public class VtMainThread extends Thread
 
                 reportRequestTableViewGuncelle(conn, cnfg);
 
+                planlanmisRaporIstekleriniKontrolEt();
+
                 dosyayaYaz("-----report_ basladi------");
                 List<YeniRaporIstek> listeYeniRaporIstek = yeniRaporIstekleriniKontrolEt();
                 if (!listeYeniRaporIstek.isEmpty())
@@ -109,6 +111,171 @@ public class VtMainThread extends Thread
                 dosyayaYaz("------------------islem bitti------------------");
             }
         }, 0, 60 * 1000);
+    }
+
+    /**
+     * verilen zamana zaman ekler ve cikarir
+     *
+     * @param cal         : orijinal zaman
+     * @param periodType: eklenecek cikarilacak zaman birimi
+     * @param period      : eklenecek cikarilacak zaman sayısı
+     * @param carpan      : 1:ekleme -1:cikarma
+     * @return
+     */
+    public Calendar zamaniGetir(Calendar cal, String periodType, int period, int carpan)
+    {
+        switch (periodType)
+        {
+            case "m":
+            case "M":
+                cal.add(Calendar.MINUTE, (period * carpan));
+                return cal;
+            case "h":
+            case "H":
+                cal.add(Calendar.HOUR, (period * carpan));
+                return cal;
+            case "d":
+            case "D":
+                cal.add(Calendar.DAY_OF_YEAR, (period * carpan));
+                return cal;
+            case "w":
+            case "W":
+                cal.add(Calendar.WEEK_OF_YEAR, (period * carpan));
+                return cal;
+            default:
+                return cal;
+        }
+    }
+
+    /**
+     * schedule tablosunda kayıt varsa request tablosuna tasır
+     *
+     * @param yri
+     */
+    public void reportRequestKayitEkle(YeniRaporIstek yri)
+    {
+        dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna yeni rapor istegi ekleniyor");
+        try
+        {
+            PreparedStatement pst = conn.prepareStatement("INSERT INTO " + cnfg.getTABLE_REQUEST() + " (START_DATE, END_DATE, REPORT_TYPE, SCHEDULE_ID) VALUES(?,?,?,?)");
+            pst.setString(1, yri.getBaslangicTarihi());
+            pst.setString(2, yri.getBitisTarihi());
+            pst.setString(3, yri.getTip());
+            pst.setInt(4, yri.getId());
+            if (pst.executeUpdate() != 0)
+            {
+                pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_SCHEDULE() + " SET REQUEST = ? WHERE ID = ?");
+                pst.setString(1, "1");
+                pst.setInt(2, yri.getId());
+                if (pst.executeUpdate() == 0)
+                {
+                    dosyayaYaz("hata 21 : " + cnfg.getTABLE_SCHEDULE() + " tablosu guncellenirken hata olustu");
+                }
+            }
+            else
+            {
+                dosyayaYaz("hata 22 : " + cnfg.getTABLE_REQUEST() + " tablosuna yeni rapor istegi eklenirken hata olustu");
+            }
+        }
+        catch (SQLException e)
+        {
+            dosyayaYaz("hata 23 : " + e.getMessage());
+            dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna yeni rapor istegi eklenirken hata olustu");
+        }
+
+        dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna yeni rapor istegi eklendi");
+    }
+
+    /**
+     * schedule tablosunundaki kayitlari kontrol eder. vakti gelen kaydı request tablosunda kopyalar
+     */
+    public void planlanmisRaporIstekleriniKontrolEt()
+    {
+        dosyayaYaz("planlanmis rapor istekleri kontrol ediliyor");
+
+        try
+        {
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, PERIOD_TYPE, PERIOD, REPORT_TYPE, START_DATE_PERIOD, START_DATE_PERIOD_TYPE, END_DATE_PERIOD, END_DATE_PERIOD_TYPE, LAST_REPORT_DATE FROM " + cnfg.getTABLE_SCHEDULE() + " WHERE REQUEST = 0");
+            ResultSet rs = pst.executeQuery();
+            while (rs.next())
+            {
+                int istekID = rs.getInt("ID");
+                String lastReportDate = rs.getString("LAST_REPORT_DATE");
+
+                if (lastReportDate == null)
+                {
+                    dosyayaYaz("yeni planlanmis rapor bulundu istek yapiliyor");
+
+                    YeniRaporIstek yri = new YeniRaporIstek();
+                    yri.setId(istekID);
+
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    Calendar cal = Calendar.getInstance();
+
+                    int stp = rs.getInt("START_DATE_PERIOD");
+                    String sdpt = rs.getString("START_DATE_PERIOD_TYPE");
+                    yri.setBaslangicTarihi(dateFormat.format(zamaniGetir(cal, sdpt, stp, -1).getTime()));
+
+                    cal = Calendar.getInstance();
+                    stp = rs.getInt("END_DATE_PERIOD");
+                    sdpt = rs.getString("END_DATE_PERIOD_TYPE");
+                    yri.setBitisTarihi(dateFormat.format(zamaniGetir(cal, sdpt, stp, -1).getTime()));
+
+                    yri.setTip(rs.getString("REPORT_TYPE"));
+                    reportRequestKayitEkle(yri);
+                }
+                else
+                {
+                    Calendar cal = Calendar.getInstance();
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    cal.setTime(sdf.parse(lastReportDate));
+
+                    int per = rs.getInt("PERIOD");
+                    String perType = rs.getString("PERIOD_TYPE");
+
+                    cal = zamaniGetir(cal, perType, per, 1);
+                    Calendar calBugun = Calendar.getInstance();
+
+                    if (calBugun.after(cal))
+                    {
+                        dosyayaYaz("planlanmis raporun vakti gelmis istek yapiliyor");
+
+                        YeniRaporIstek yri = new YeniRaporIstek();
+                        yri.setId(istekID);
+
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                        int stp = rs.getInt("START_DATE_PERIOD");
+                        String sdpt = rs.getString("START_DATE_PERIOD_TYPE");
+                        yri.setBaslangicTarihi(dateFormat.format(zamaniGetir(cal, sdpt, stp, -1).getTime()));
+
+                        cal = Calendar.getInstance();
+                        stp = rs.getInt("END_DATE_PERIOD");
+                        sdpt = rs.getString("END_DATE_PERIOD_TYPE");
+                        yri.setBitisTarihi(dateFormat.format(zamaniGetir(cal, sdpt, stp, -1).getTime()));
+
+                        yri.setTip(rs.getString("REPORT_TYPE"));
+                        reportRequestKayitEkle(yri);
+                    }
+                    else
+                    {
+                        dosyayaYaz("planlanmis raporun vakti gelmemis");
+                    }
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            dosyayaYaz("hata 19 : " + e.getMessage());
+            dosyayaYaz("yeni olusan raporlar kontrol edilirken hata olustu");
+        }
+        catch (ParseException e)
+        {
+            dosyayaYaz("hata 20 : " + e.getMessage());
+            dosyayaYaz("yeni olusan raporlar kontrol edilirken hata olustu");
+        }
+
+        dosyayaYaz("planlanmis rapor istekleri kontrol edildi");
     }
 
     /**
@@ -214,8 +381,30 @@ public class VtMainThread extends Thread
 
             statement.executeBatch();
 
+            try
+            {
+                PreparedStatement pst = conn.prepareStatement("SELECT SCHEDULE_ID FROM " + cnfg.getTABLE_REQUEST() + " WHERE ID = " + ri.getId());
+                ResultSet rs = pst.executeQuery();
+                while (rs.next())
+                {
+                    int scheduleID = rs.getInt("SCHEDULE_ID");
+                    if (scheduleID != -1)
+                    {
+                        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_SCHEDULE() + " SET REQUEST=0, LAST_REPORT_DATE=? WHERE ID=" + scheduleID);
+                        pst.setString(1, dateFormat.format(date));
+                        if (pst.executeUpdate() == 0)
+                        {
+                            dosyayaYaz("hata 17 : " + cnfg.getTABLE_SCHEDULE() + " tablosun guncellenirken hata olustu");
+                        }
+                    }
+                }
+            }
+            catch (SQLException e)
+            {
+                dosyayaYaz("hata 18 : " + e.getMessage());
+            }
             dosyayaYaz("rapor kaydedildi");
-
 
             /*
             String genelSorgu="";
