@@ -19,6 +19,7 @@ public class Config
     private String TABLE_REQUEST = "";
     private String TABLE_CONTENTS = "";
     private String TABLE_SCHEDULE = "";
+    private final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public boolean ayarlariOku()
     {
@@ -236,5 +237,10 @@ public class Config
     public void setTABLE_SCHEDULE(String TABLE_SCHEDULE)
     {
         this.TABLE_SCHEDULE = TABLE_SCHEDULE;
+    }
+
+    public String getDATE_FORMAT()
+    {
+        return DATE_FORMAT;
     }
 }

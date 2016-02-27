@@ -209,7 +209,7 @@ public class VtMainThread extends Thread
                     YeniRaporIstek yri = new YeniRaporIstek();
                     yri.setId(istekID);
 
-                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    DateFormat dateFormat = new SimpleDateFormat(cnfg.getDATE_FORMAT());
                     Calendar cal = Calendar.getInstance();
 
                     int stp = rs.getInt("START_DATE_PERIOD");
@@ -227,7 +227,7 @@ public class VtMainThread extends Thread
                 else
                 {
                     Calendar cal = Calendar.getInstance();
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    SimpleDateFormat sdf = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
                     cal.setTime(sdf.parse(lastReportDate));
 
                     int per = rs.getInt("PERIOD");
@@ -243,7 +243,7 @@ public class VtMainThread extends Thread
                         YeniRaporIstek yri = new YeniRaporIstek();
                         yri.setId(istekID);
 
-                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        DateFormat dateFormat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
 
                         int stp = rs.getInt("START_DATE_PERIOD");
                         String sdpt = rs.getString("START_DATE_PERIOD_TYPE");
@@ -390,7 +390,7 @@ public class VtMainThread extends Thread
                     int scheduleID = rs.getInt("SCHEDULE_ID");
                     if (scheduleID != -1)
                     {
-                        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        dateFormat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
                         pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_SCHEDULE() + " SET REQUEST=0, LAST_REPORT_DATE=? WHERE ID=" + scheduleID);
                         pst.setString(1, dateFormat.format(date));
                         if (pst.executeUpdate() == 0)
@@ -717,7 +717,7 @@ public class VtMainThread extends Thread
 
         try
         {
-            DateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            DateFormat dateformat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
             GregorianCalendar cal = new GregorianCalendar();
 
             Date date = dateformat.parse(baslangic);
@@ -779,7 +779,7 @@ public class VtMainThread extends Thread
     {
         dosyayaYaz("rapor isteginin durumu veritabaninda guncelleniyor 1 : " + info.getReportProcessingStatus());
 
-        SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat dateformat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
         String submitDate = dateformat.format(info.getSubmittedDate().toGregorianCalendar().getTime());
 
         try
