@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import jfxtras.scene.control.LocalTimePicker?>
 
-<AnchorPane fx:id="anchor" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="200.0" minWidth="200.0" prefHeight="449.0" prefWidth="653.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="amws_report.Controller">
+<AnchorPane fx:id="anchor" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="200.0" minWidth="200.0" prefHeight="449.0" prefWidth="653.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="amws_report.FXMLDocumentController">
    <children>
       <GridPane layoutX="55.0" layoutY="26.0" minHeight="200.0" minWidth="200.0" prefHeight="142.0" prefWidth="499.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <columnConstraints>
