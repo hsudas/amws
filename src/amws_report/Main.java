@@ -88,7 +88,7 @@ public class Main extends Application
             @Override
             public void handle(MouseEvent mouseEvent)
             {
-                System.out.println("tiklandi : " + mouseEvent);
+                //System.out.println("tiklandi : " + mouseEvent);
                 reportRequestKayitEkle();
             }
         });
@@ -190,6 +190,10 @@ public class Main extends Application
         return cnfg;
     }
 
+    /**
+     * arayuzde reportRequest butonuna tiklaninca burasi calisir
+     * insert threadini baslatip request tablosuna arayuzdeki bilgilerle rapor ekler
+     */
     public void reportRequestKayitEkle()
     {
         yri.setTip(((amws_report.RaporTuru) cbRaporTuru.getSelectionModel().getSelectedItem()).getCirkin());

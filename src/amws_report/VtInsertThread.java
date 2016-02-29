@@ -11,6 +11,7 @@ import static amws_report.Veritabani.vtBaglantisiKur;
 
 public class VtInsertThread extends Thread
 {
+
     private Config cnfg = null;
     private Connection conn = null;
     private YeniRaporIstek yri;
@@ -38,10 +39,13 @@ public class VtInsertThread extends Thread
         }
         catch (SQLException e)
         {
-            System.out.println("hata : " + e.getMessage());
+            dosyayaYaz("hata 24 : " + e.getMessage());
         }
     }
 
+    /**
+     * request tablosuna kayıt ekler
+     */
     public void reportRequestKayitEkle()
     {
         try
@@ -54,7 +58,7 @@ public class VtInsertThread extends Thread
         }
         catch (SQLException e)
         {
-            System.out.println("yri hata: " + e.getMessage());
+            dosyayaYaz("hata 25 : " + e.getMessage());
         }
     }
 }

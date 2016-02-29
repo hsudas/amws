@@ -717,7 +717,8 @@ public class VtMainThread extends Thread
 
         try
         {
-            DateFormat dateformat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
+            //DateFormat dateformat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
+            DateFormat dateformat = new SimpleDateFormat(cnfg.getDATE_FORMAT());
             GregorianCalendar cal = new GregorianCalendar();
 
             Date date = dateformat.parse(baslangic);
