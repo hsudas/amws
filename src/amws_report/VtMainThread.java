@@ -227,7 +227,7 @@ public class VtMainThread extends Thread
                 else
                 {
                     Calendar cal = Calendar.getInstance();
-                    SimpleDateFormat sdf = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
+                    SimpleDateFormat sdf = new SimpleDateFormat(cnfg.getDATE_FORMAT());
                     cal.setTime(sdf.parse(lastReportDate));
 
                     int per = rs.getInt("PERIOD");
@@ -243,7 +243,7 @@ public class VtMainThread extends Thread
                         YeniRaporIstek yri = new YeniRaporIstek();
                         yri.setId(istekID);
 
-                        DateFormat dateFormat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
+                        DateFormat dateFormat = new SimpleDateFormat(cnfg.getDATE_FORMAT());
 
                         int stp = rs.getInt("START_DATE_PERIOD");
                         String sdpt = rs.getString("START_DATE_PERIOD_TYPE");
@@ -390,7 +390,7 @@ public class VtMainThread extends Thread
                     int scheduleID = rs.getInt("SCHEDULE_ID");
                     if (scheduleID != -1)
                     {
-                        dateFormat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
+                        dateFormat = new SimpleDateFormat(cnfg.getDATE_FORMAT());
                         pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_SCHEDULE() + " SET REQUEST=0, LAST_REPORT_DATE=? WHERE ID=" + scheduleID);
                         pst.setString(1, dateFormat.format(date));
                         if (pst.executeUpdate() == 0)
@@ -717,7 +717,6 @@ public class VtMainThread extends Thread
 
         try
         {
-            //DateFormat dateformat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
             DateFormat dateformat = new SimpleDateFormat(cnfg.getDATE_FORMAT());
             GregorianCalendar cal = new GregorianCalendar();
 
@@ -780,7 +779,7 @@ public class VtMainThread extends Thread
     {
         dosyayaYaz("rapor isteginin durumu veritabaninda guncelleniyor 1 : " + info.getReportProcessingStatus());
 
-        SimpleDateFormat dateformat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
+        SimpleDateFormat dateformat = new SimpleDateFormat(cnfg.getDATE_FORMAT());
         String submitDate = dateformat.format(info.getSubmittedDate().toGregorianCalendar().getTime());
 
         try
