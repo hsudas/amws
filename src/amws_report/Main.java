@@ -93,8 +93,8 @@ public class Main extends Application
             }
         });
 
-        stage.setTitle("Hello World");
-        stage.setScene(new Scene(root, 500, 500));
+        stage.setTitle("amws report");
+        stage.setScene(new Scene(root, 800, 500));
         stage.setMinHeight(300);
         stage.setMinWidth(300);
         stage.show();
