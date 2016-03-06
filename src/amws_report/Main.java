@@ -1,11 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package amws_report;
 
-import static javafx.application.Application.launch;
+import java.io.File;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.application.Application;
@@ -34,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import static javafx.application.Application.launch;
+import javafx.stage.FileChooser;
 
 /**
  *
@@ -48,13 +44,14 @@ public class Main extends Application
     private static TableView tableView;//fxml tableView bileseni
     private static List listTableView;//tableView doldurmak için liste
     private static ComboBox cbRaporTuru;//fxml combobox bileseni
-    private static Button btnRaporIstek;//fxml combobox bileseni
-    private static List<amws_report.YeniRaporIstek> listeRaporIstek;//arayüzden yapılan rapor isteklerini tutmak için liste
+    private static Button btnRaporIstek;//fxml rapor istek butonu
+    //private static List<amws_report.YeniRaporIstek> listeRaporIstek;//arayüzden yapılan rapor isteklerini tutmak için liste
     private static amws_report.YeniRaporIstek yri;
     private static DatePicker dpBaslangicTarih;
     private static DatePicker dpBitisTarih;
     private static LocalTimePicker tpBaslangic;
     private static LocalTimePicker tpBitis;
+    private static Button btnTextToDB;//fxml text to db butonu
 
     @Override
     public void start(Stage stage) throws Exception
@@ -62,9 +59,7 @@ public class Main extends Application
 
         /*
         Parent root = FXMLLoader.load(getClass().getResource("FXMLDocument.fxml"));
-        
         Scene scene = new Scene(root);
-        
         stage.setScene(scene);
         stage.show();
          */
@@ -82,6 +77,7 @@ public class Main extends Application
         btnRaporIstek = (Button) root.lookup("#btnRaporIstek");
         dpBaslangicTarih.setValue(LocalDate.now());
         dpBitisTarih.setValue(LocalDate.now());
+        btnTextToDB = (Button) root.lookup("#btnTextToDB");
 
         btnRaporIstek.setOnMouseClicked(new EventHandler<MouseEvent>()
         {
@@ -90,6 +86,22 @@ public class Main extends Application
             {
                 //System.out.println("tiklandi : " + mouseEvent);
                 reportRequestKayitEkle();
+            }
+        });
+        btnTextToDB.setOnMouseClicked(new EventHandler<MouseEvent>()
+        {
+            @Override
+            public void handle(MouseEvent t)
+            {
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Open Resource File");
+
+                File file = fileChooser.showOpenDialog(stage);
+                if (file != null)
+                {
+                    amws_report.VtInsertThread vtInsertThread = new amws_report.VtInsertThread(file);
+                    vtInsertThread.start();
+                }
             }
         });
 
@@ -118,7 +130,6 @@ public class Main extends Application
 
         amws_report.VtMainThread vtMainThread = new amws_report.VtMainThread();
         vtMainThread.start();
-
     }
 
     /**
@@ -129,7 +140,7 @@ public class Main extends Application
         listTableView = new ArrayList();
         cntrl = new amws_report.FXMLDocumentController();
         cnfg = new amws_report.Config();
-        listeRaporIstek = new ArrayList<>();
+        //listeRaporIstek = new ArrayList<>();
         yri = new amws_report.YeniRaporIstek();
 
         launch(args);
@@ -191,8 +202,8 @@ public class Main extends Application
     }
 
     /**
-     * arayuzde reportRequest butonuna tiklaninca burasi calisir
-     * insert threadini baslatip request tablosuna arayuzdeki bilgilerle rapor ekler
+     * arayuzde reportRequest butonuna tiklaninca burasi calisir insert
+     * threadini baslatip request tablosuna arayuzdeki bilgilerle rapor ekler
      */
     public void reportRequestKayitEkle()
     {
@@ -253,5 +264,4 @@ public class Main extends Application
             }
         });
     }
-
 }

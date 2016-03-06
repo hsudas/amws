@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package amws_report;
 
 import java.net.URL;
@@ -20,17 +15,11 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 import jfxtras.scene.control.LocalTimePicker;
 
-/**
- *
- * @author ekcdr
- */
 public class FXMLDocumentController implements Initializable
 {
-    
+
     @FXML
     private Label label;
-    
-    
     @FXML
     public Button btnRaporIstek;
     @FXML
@@ -65,12 +54,12 @@ public class FXMLDocumentController implements Initializable
     public LocalTimePicker tpBaslangic;
     @FXML
     public LocalTimePicker tpBitis;
+    @FXML
+    public Button btnTextToDB;
 
     public FXMLDocumentController()
     {
     }
-
-    
 
     //ReportRequestTableView sinifindaki degiskenler tableView ile baglaniyor
     public void initTableView()
@@ -99,19 +88,18 @@ public class FXMLDocumentController implements Initializable
         System.out.println("log : " + log);
         txtLog.setText(log);
     }
-    
+
     @FXML
     private void handleButtonAction(ActionEvent event)
     {
         System.out.println("You clicked me!");
         label.setText("Hello World!");
     }
-    
+
     @Override
     public void initialize(URL url, ResourceBundle rb)
     {
         // TODO
-    }    
-    
-    
+    }
+
 }
