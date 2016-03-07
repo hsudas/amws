@@ -28,13 +28,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import static javafx.application.Application.launch;
 import javafx.stage.FileChooser;
 
-/**
- *
- * @author ekcdr
- */
 public class Main extends Application
 {
 
@@ -52,6 +49,7 @@ public class Main extends Application
     private static LocalTimePicker tpBaslangic;
     private static LocalTimePicker tpBitis;
     private static Button btnTextToDB;//fxml text to db butonu
+    private static TextField txtUUID;//UUID alani
 
     @Override
     public void start(Stage stage) throws Exception
@@ -78,7 +76,9 @@ public class Main extends Application
         dpBaslangicTarih.setValue(LocalDate.now());
         dpBitisTarih.setValue(LocalDate.now());
         btnTextToDB = (Button) root.lookup("#btnTextToDB");
+        txtUUID = (TextField) root.lookup("#txtUUID");
 
+        txtUUID.setText(UUID.randomUUID().toString());
         btnRaporIstek.setOnMouseClicked(new EventHandler<MouseEvent>()
         {
             @Override
