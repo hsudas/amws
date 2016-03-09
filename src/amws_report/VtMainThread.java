@@ -116,10 +116,10 @@ public class VtMainThread extends Thread
     /**
      * verilen zamana zaman ekler ve cikarir
      *
-     * @param cal         : orijinal zaman
-     * @param periodType: eklenecek cikarilacak zaman birimi
-     * @param period      : eklenecek cikarilacak zaman sayısı
-     * @param carpan      : 1:ekleme -1:cikarma
+     * @param cal : orijinal zaman
+     * @param periodType : eklenecek cikarilacak zaman birimi
+     * @param period : eklenecek cikarilacak zaman sayısı
+     * @param carpan : 1:ekleme -1:cikarma
      * @return
      */
     public Calendar zamaniGetir(Calendar cal, String periodType, int period, int carpan)
@@ -157,11 +157,12 @@ public class VtMainThread extends Thread
         dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna yeni rapor istegi ekleniyor");
         try
         {
-            PreparedStatement pst = conn.prepareStatement("INSERT INTO " + cnfg.getTABLE_REQUEST() + " (START_DATE, END_DATE, REPORT_TYPE, SCHEDULE_ID) VALUES(?,?,?,?)");
+            PreparedStatement pst = conn.prepareStatement("INSERT INTO " + cnfg.getTABLE_REQUEST() + " (START_DATE, END_DATE, REPORT_TYPE, SCHEDULE_ID, UUID) VALUES(?,?,?,?,?)");
             pst.setString(1, yri.getBaslangicTarihi());
             pst.setString(2, yri.getBitisTarihi());
             pst.setString(3, yri.getTip());
             pst.setInt(4, yri.getId());
+            pst.setString(5, yri.getUuid());
             if (pst.executeUpdate() != 0)
             {
                 pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_SCHEDULE() + " SET REQUEST = ? WHERE ID = ?");
@@ -187,7 +188,8 @@ public class VtMainThread extends Thread
     }
 
     /**
-     * schedule tablosunundaki kayitlari kontrol eder. vakti gelen kaydı request tablosunda kopyalar
+     * schedule tablosunundaki kayitlari kontrol eder. vakti gelen kaydı request
+     * tablosunda kopyalar
      */
     public void planlanmisRaporIstekleriniKontrolEt()
     {
@@ -195,12 +197,13 @@ public class VtMainThread extends Thread
 
         try
         {
-            PreparedStatement pst = conn.prepareStatement("SELECT ID, PERIOD_TYPE, PERIOD, REPORT_TYPE, START_DATE_PERIOD, START_DATE_PERIOD_TYPE, END_DATE_PERIOD, END_DATE_PERIOD_TYPE, LAST_REPORT_DATE FROM " + cnfg.getTABLE_SCHEDULE() + " WHERE REQUEST = 0");
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, PERIOD_TYPE, PERIOD, REPORT_TYPE, START_DATE_PERIOD, START_DATE_PERIOD_TYPE, END_DATE_PERIOD, END_DATE_PERIOD_TYPE, LAST_REPORT_DATE, UUID FROM " + cnfg.getTABLE_SCHEDULE() + " WHERE REQUEST = 0");
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
                 int istekID = rs.getInt("ID");
                 String lastReportDate = rs.getString("LAST_REPORT_DATE");
+                String uuid = rs.getString("UUID");
 
                 if (lastReportDate == null)
                 {
@@ -208,6 +211,7 @@ public class VtMainThread extends Thread
 
                     YeniRaporIstek yri = new YeniRaporIstek();
                     yri.setId(istekID);
+                    yri.setUuid(uuid);
 
                     DateFormat dateFormat = new SimpleDateFormat(cnfg.getDATE_FORMAT());
                     Calendar cal = Calendar.getInstance();
@@ -242,6 +246,7 @@ public class VtMainThread extends Thread
 
                         YeniRaporIstek yri = new YeniRaporIstek();
                         yri.setId(istekID);
+                        yri.setUuid(uuid);
 
                         DateFormat dateFormat = new SimpleDateFormat(cnfg.getDATE_FORMAT());
 
@@ -539,7 +544,7 @@ public class VtMainThread extends Thread
      * amws e baglanip ReportRequestList islemi yapar
      *
      * @param listeRaporIstek : ReportRequestList isleminde sorulacak raporların
-     *                        verileri
+     * verileri
      */
     public void getReportRequestList(List<Rapor> listeRaporIstek)
     {
@@ -599,7 +604,7 @@ public class VtMainThread extends Thread
      * ReportRequestList sonucu alindiktan sonra vt de gerekli yerleri gunceller
      *
      * @param raporID : vt id si
-     * @param rri     : ReportRequestList sonucu
+     * @param rri : ReportRequestList sonucu
      */
     public void vtReportRequestListGuncelle(int raporID, ReportRequestInfo rri)
     {
@@ -773,7 +778,7 @@ public class VtMainThread extends Thread
      * requestReport tan sonra gelen bilgilerle vt yi gunceller
      *
      * @param raporID : requestReport tun vt deki id si
-     * @param info    : amws den gelen requestReport cevabı
+     * @param info : amws den gelen requestReport cevabı
      */
     public void vtRequestReportGuncelle(int raporID, ReportRequestInfo info)
     {

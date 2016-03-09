@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * rapor turlerinin combobox a eklenmesi için sınıf.
- * combobox ta guzel gozukecek fakat vt ye normal hali kaydedilecek
+ * rapor turlerinin combobox a eklenmesi için sınıf. combobox ta guzel gozukecek
+ * fakat vt ye normal hali kaydedilecek
  */
 public class RaporTuru
 {
+
     private List listeRaporTuru;
     private String guzel;
     private String cirkin;

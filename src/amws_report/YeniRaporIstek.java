@@ -7,6 +7,7 @@ public class YeniRaporIstek
     private String baslangicTarihi;
     private String bitisTarihi;
     private String tip;
+    private String uuid;
 
     public YeniRaporIstek(int id, String baslangicTarihi, String bitisTarihi, String tip)
     {
@@ -58,5 +59,15 @@ public class YeniRaporIstek
     public void setId(int id)
     {
         this.id = id;
+    }
+
+    public String getUuid()
+    {
+        return uuid;
+    }
+
+    public void setUuid(String uuid)
+    {
+        this.uuid = uuid;
     }
 }

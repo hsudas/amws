@@ -42,7 +42,6 @@ public class Main extends Application
     private static List listTableView;//tableView doldurmak için liste
     private static ComboBox cbRaporTuru;//fxml combobox bileseni
     private static Button btnRaporIstek;//fxml rapor istek butonu
-    //private static List<amws_report.YeniRaporIstek> listeRaporIstek;//arayüzden yapılan rapor isteklerini tutmak için liste
     private static amws_report.YeniRaporIstek yri;
     private static DatePicker dpBaslangicTarih;
     private static DatePicker dpBitisTarih;
@@ -78,7 +77,7 @@ public class Main extends Application
         btnTextToDB = (Button) root.lookup("#btnTextToDB");
         txtUUID = (TextField) root.lookup("#txtUUID");
 
-        txtUUID.setText(UUID.randomUUID().toString());
+        uuidYenile();
         btnRaporIstek.setOnMouseClicked(new EventHandler<MouseEvent>()
         {
             @Override
@@ -99,7 +98,7 @@ public class Main extends Application
                 File file = fileChooser.showOpenDialog(stage);
                 if (file != null)
                 {
-                    amws_report.VtInsertThread vtInsertThread = new amws_report.VtInsertThread(file);
+                    amws_report.VtInsertThread vtInsertThread = new amws_report.VtInsertThread(file, txtUUID.getText());
                     vtInsertThread.start();
                 }
             }
@@ -108,7 +107,7 @@ public class Main extends Application
         stage.setTitle("amws report");
         stage.setScene(new Scene(root, 800, 500));
         stage.setMinHeight(300);
-        stage.setMinWidth(300);
+        stage.setMinWidth(500);
         stage.show();
 
         cntrl.initTableView();
@@ -140,7 +139,6 @@ public class Main extends Application
         listTableView = new ArrayList();
         cntrl = new amws_report.FXMLDocumentController();
         cnfg = new amws_report.Config();
-        //listeRaporIstek = new ArrayList<>();
         yri = new amws_report.YeniRaporIstek();
 
         launch(args);
@@ -174,6 +172,14 @@ public class Main extends Application
     }
 
     /**
+     * yeni bir uuid uretip, txtUUID ye yazar
+     */
+    public static void uuidYenile()
+    {
+        txtUUID.setText(UUID.randomUUID().toString());
+    }
+
+    /**
      * tableView guncellemesinden once data listesini siliyor
      */
     public static void listTableViewTemizle()
@@ -184,9 +190,20 @@ public class Main extends Application
     /**
      * TableViewa satir ekler
      */
-    public static void tableViewSatirEkle(String stn1, String stn2, String stn3, String stn4, String stn5, String stn6, String stn7, String stn8, String stn9)
+    public static void tableViewSatirEkle(
+            String stn1,
+            String stn2,
+            String stn3,
+            String stn4,
+            String stn5,
+            String stn6,
+            String stn7,
+            String stn8,
+            String stn9,
+            String stn10,
+            String stn11)
     {
-        listTableView.add(new amws_report.ReportRequestTableView(stn1, stn2, stn3, stn4, stn5, stn6, stn7, stn8, stn9));
+        listTableView.add(new amws_report.ReportRequestTableView(stn1, stn2, stn3, stn4, stn5, stn6, stn7, stn8, stn9, stn10, stn11));
         ObservableList data = FXCollections.observableList(listTableView);
         tableView.setItems(data);
     }
@@ -210,6 +227,7 @@ public class Main extends Application
         yri.setTip(((amws_report.RaporTuru) cbRaporTuru.getSelectionModel().getSelectedItem()).getCirkin());
         yri.setBaslangicTarihi(dpBaslangicTarih.getValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + " " + tpBaslangic.getLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")) + ":00");
         yri.setBitisTarihi(dpBitisTarih.getValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + " " + tpBitis.getLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")) + ":00");
+        yri.setUuid(txtUUID.getText());
 
         amws_report.VtInsertThread vtInsertThread = new amws_report.VtInsertThread(yri);
         vtInsertThread.start();
@@ -253,6 +271,7 @@ public class Main extends Application
             }
         });
 
+        /*
         //item secimi yapılınca buraya geliyor
         cbRaporTuru.valueProperty().addListener(new ChangeListener()
         {
@@ -260,8 +279,9 @@ public class Main extends Application
             public void changed(ObservableValue observableValue, Object o, Object t1)
             {
                 amws_report.RaporTuru rt = (amws_report.RaporTuru) cbRaporTuru.getSelectionModel().getSelectedItem();
-                System.out.println("crin : " + rt.getCirkin());
+                System.out.println("cirkin : " + rt.getCirkin());
             }
         });
+         */
     }
 }

@@ -46,6 +46,10 @@ public class FXMLDocumentController implements Initializable
     @FXML
     public TableColumn col9;
     @FXML
+    public TableColumn col10;
+    @FXML
+    public TableColumn col11;
+    @FXML
     public ComboBox cbRaporTuru;
     @FXML
     public DatePicker dpBaslangicTarih;
@@ -76,6 +80,8 @@ public class FXMLDocumentController implements Initializable
         col7.setCellValueFactory(new PropertyValueFactory<amws_report.ReportRequestTableView, String>("stn7"));
         col8.setCellValueFactory(new PropertyValueFactory<amws_report.ReportRequestTableView, String>("stn8"));
         col9.setCellValueFactory(new PropertyValueFactory<amws_report.ReportRequestTableView, String>("stn9"));
+        col10.setCellValueFactory(new PropertyValueFactory<amws_report.ReportRequestTableView, String>("stn10"));
+        col11.setCellValueFactory(new PropertyValueFactory<amws_report.ReportRequestTableView, String>("stn11"));
     }
 
     @FXML

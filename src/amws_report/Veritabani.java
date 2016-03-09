@@ -16,19 +16,21 @@ public class Veritabani
         try
         {
             listTableViewTemizle();
-            PreparedStatement pst = conn.prepareStatement("SELECT START_DATE, END_DATE, REPORT_TYPE, SUBMIT_DATE, STATUS, REPORT_REQUEST_ID, GENERATED_REPORT_ID, DOWNLOADED, DOWNLOAD_TYPE FROM " + cnfg.getTABLE_REQUEST());
+            PreparedStatement pst = conn.prepareStatement("SELECT START_DATE, END_DATE, REPORT_TYPE, SUBMIT_DATE, STATUS, REPORT_REQUEST_ID, GENERATED_REPORT_ID, DOWNLOADED, DOWNLOAD_TYPE, SCHEDULE_ID, UUID FROM " + cnfg.getTABLE_REQUEST());
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
                 tableViewSatirEkle(rs.getString("START_DATE"),
-                                   rs.getString("END_DATE"),
-                                   rs.getString("REPORT_TYPE"),
-                                   rs.getString("SUBMIT_DATE"),
-                                   rs.getString("STATUS"),
-                                   rs.getString("REPORT_REQUEST_ID"),
-                                   rs.getString("GENERATED_REPORT_ID"),
-                                   rs.getString("DOWNLOADED"),
-                                   rs.getString("DOWNLOAD_TYPE"));
+                        rs.getString("END_DATE"),
+                        rs.getString("REPORT_TYPE"),
+                        rs.getString("SUBMIT_DATE"),
+                        rs.getString("STATUS"),
+                        rs.getString("REPORT_REQUEST_ID"),
+                        rs.getString("GENERATED_REPORT_ID"),
+                        rs.getString("DOWNLOADED"),
+                        rs.getString("DOWNLOAD_TYPE"),
+                        rs.getString("SCHEDULE_ID"),
+                        rs.getString("UUID"));
             }
         }
         catch (SQLException e)

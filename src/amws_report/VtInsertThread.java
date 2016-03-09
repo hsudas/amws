@@ -6,6 +6,7 @@ import java.sql.SQLException;
 
 import static amws_report.Main.dosyayaYaz;
 import static amws_report.Main.getCnfg;
+import static amws_report.Main.uuidYenile;
 import static amws_report.Veritabani.reportRequestTableViewGuncelle;
 import static amws_report.Veritabani.vtBaglantisiKur;
 import java.io.BufferedReader;
@@ -21,6 +22,7 @@ public class VtInsertThread extends Thread
     private Connection conn = null;
     private YeniRaporIstek yri;
     private File file;
+    private String uuid;
     private int tip = -1;
     private final int TIP_REQUEST = 1;
     private final int TIP_CONTENTS = 2;
@@ -42,10 +44,11 @@ public class VtInsertThread extends Thread
      *
      * @param file : content tablosuna eklenecek dosya
      */
-    public VtInsertThread(File file)
+    public VtInsertThread(File file, String uuid)
     {
         tip = TIP_CONTENTS;
         this.file = file;
+        this.uuid = uuid;
         cnfg = getCnfg();
     }
 
@@ -80,7 +83,7 @@ public class VtInsertThread extends Thread
                     conn = vtBaglantisiKur(cnfg);
                     if (conn != null)
                     {
-                        reportContentsKayitEkle();
+                        reportContentsKayitEkle(uuid);
                         conn.close();
                     }
                 }
@@ -97,9 +100,9 @@ public class VtInsertThread extends Thread
     /**
      * contents tablosuna kayit ekler
      */
-    public void reportContentsKayitEkle()
+    public void reportContentsKayitEkle(String uuid)
     {
-        dosyayaYaz(cnfg.getTABLE_CONTENTS() + "tablosuna kayit ekleniyor");
+        dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit ekleniyor");
         BufferedReader br = null;
         try
         {
@@ -110,8 +113,8 @@ public class VtInsertThread extends Thread
             br = new BufferedReader(new FileReader(file));
             while ((sCurrentLine = br.readLine()) != null)
             {
-                String sorgu1 = "INSERT INTO " + cnfg.getTABLE_CONTENTS() + " (REPORT_ID, ROW_ID";
-                String sorgu2 = "VALUES (0, 0";
+                String sorgu1 = "INSERT INTO " + cnfg.getTABLE_CONTENTS() + " (REPORT_ID, ROW_ID, UUID";
+                String sorgu2 = "VALUES (0, 0, '" + uuid + "' ";
 
                 String[] satirIcerigi = sCurrentLine.split("\t");
                 for (int i = 0; i < satirIcerigi.length; i++)
@@ -131,12 +134,12 @@ public class VtInsertThread extends Thread
         }
         catch (IOException e)
         {
-            dosyayaYaz(cnfg.getTABLE_CONTENTS() + "tablosuna kayit eklenirken hata olustu");
+            dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklenirken hata olustu");
             dosyayaYaz("hata 27 : " + e.getMessage());
         }
         catch (SQLException e)
         {
-            dosyayaYaz(cnfg.getTABLE_CONTENTS() + "tablosuna kayit eklenirken hata olustu");
+            dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklenirken hata olustu");
             dosyayaYaz("hata 28 : " + e.getMessage());
         }
         finally
@@ -150,11 +153,14 @@ public class VtInsertThread extends Thread
             }
             catch (IOException e)
             {
-                dosyayaYaz(cnfg.getTABLE_CONTENTS() + "tablosuna kayit eklenirken hata olustu");
+                dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklenirken hata olustu");
                 dosyayaYaz("hata 29 : " + e.getMessage());
             }
         }
-        dosyayaYaz(cnfg.getTABLE_CONTENTS() + "tablosuna kayit eklendi");
+
+        uuidYenile();
+
+        dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklendi");
     }
 
     /**
@@ -162,20 +168,24 @@ public class VtInsertThread extends Thread
      */
     public void reportRequestKayitEkle()
     {
-        dosyayaYaz(cnfg.getTABLE_REQUEST() + "tablosuna kayit ekleniyor");
+        dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna kayit ekleniyor");
         try
         {
-            PreparedStatement pst = conn.prepareStatement("INSERT INTO " + cnfg.getTABLE_REQUEST() + " (START_DATE, END_DATE, REPORT_TYPE) VALUES (?,?,?)");
+            PreparedStatement pst = conn.prepareStatement("INSERT INTO " + cnfg.getTABLE_REQUEST() + " (START_DATE, END_DATE, REPORT_TYPE, UUID) VALUES (?,?,?,?)");
             pst.setString(1, yri.getBaslangicTarihi());
             pst.setString(2, yri.getBitisTarihi());
             pst.setString(3, yri.getTip());
+            pst.setString(4, yri.getUuid());
             pst.execute();
         }
         catch (SQLException e)
         {
-            dosyayaYaz(cnfg.getTABLE_REQUEST() + "tablosuna kayit eklenirken hata olustu");
+            dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna kayit eklenirken hata olustu");
             dosyayaYaz("hata 25 : " + e.getMessage());
         }
-        dosyayaYaz(cnfg.getTABLE_REQUEST() + "tablosuna kayit eklendi");
+
+        uuidYenile();
+
+        dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna kayit eklendi");
     }
 }
