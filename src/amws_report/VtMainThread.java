@@ -21,6 +21,9 @@ import static amws_report.Main.dosyayaYaz;
 import static amws_report.Main.getCnfg;
 import static amws_report.Veritabani.reportRequestTableViewGuncelle;
 import static amws_report.Veritabani.vtBaglantisiKur;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 public class VtMainThread extends Thread
 {
@@ -72,7 +75,7 @@ public class VtMainThread extends Thread
 
                 planlanmisRaporIstekleriniKontrolEt();
 
-                dosyayaYaz("-----report_ basladi------");
+                dosyayaYaz("-----reportRequest basladi------");
                 List<YeniRaporIstek> listeYeniRaporIstek = yeniRaporIstekleriniKontrolEt();
                 if (!listeYeniRaporIstek.isEmpty())
                 {
@@ -296,14 +299,14 @@ public class VtMainThread extends Thread
         try
         {
             //PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID FROM ROYAL.ROYAL.REPORT_REQUEST WHERE STATUS='_DONE_' AND (DOWNLOADED=0 OR DOWNLOADED IS NULL);");
-            PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID FROM " + cnfg.getTABLE_REQUEST() + " WHERE STATUS='_DONE_' AND (DOWNLOADED=0 OR DOWNLOADED IS NULL);");
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, GENERATED_REPORT_ID, UUID FROM " + cnfg.getTABLE_REQUEST() + " WHERE STATUS='_DONE_' AND (DOWNLOADED_PC=0 OR DOWNLOADED_PC IS NULL);");
 
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
-                dosyayaYaz("yeni olusan rapor var : id : " + rs.getString("GENERATED_REPORT_ID"));
+                dosyayaYaz("yeni olusan rapor var : id : " + rs.getString("GENERATED_REPORT_ID") + ", uuid : " + rs.getString("UUID"));
 
-                Rapor ri = new Rapor(rs.getInt("ID"), rs.getString("GENERATED_REPORT_ID"));
+                Rapor ri = new Rapor(rs.getInt("ID"), rs.getString("GENERATED_REPORT_ID"), rs.getString("UUID"));
                 listeRaporIstek.add(ri);
             }
         }
@@ -318,6 +321,143 @@ public class VtMainThread extends Thread
     }
 
     /**
+     * rapor icerigini bilgisayara kaydeder
+     *
+     * @param dosyaIsmi
+     * @param request
+     * @param ri
+     * @return
+     */
+    public FOS raporPCKaydet(String dosyaIsmi, GetReportRequest request, Rapor ri)
+    {
+        dosyayaYaz("rapor bilgisayara kaydediliyor");
+
+        try
+        {
+            FOS report = new FOS(dosyaIsmi);
+            request.setReportOutputStream(report);
+            service.getReport(request);
+
+            dosyayaYaz("rapor bilgisayara kaydedildi");
+
+            dosyayaYaz("vt guncelleniyor");
+
+            PreparedStatement pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_REQUEST() + " SET DOWNLOADED_PC=1 WHERE ID=" + ri.getId() + ";");
+            if (pst.executeUpdate() == 0)
+            {
+                dosyayaYaz("hata 32 : " + cnfg.getTABLE_SCHEDULE() + " tablosu guncellenirken hata olustu");
+            }
+
+            dosyayaYaz("vt guncellendi");
+
+            return report;
+        }
+        catch (SQLException e)
+        {
+
+        }
+        catch (FileNotFoundException e)
+        {
+            dosyayaYaz("hata 2 : " + e.getMessage());
+            dosyayaYaz("rapor kaydedilirken hata olustu");
+        }
+        catch (MarketplaceWebServiceException ex)
+        {
+            dosyayaYaz("hata 3 : " + ex.getMessage()
+                    + "- Response Status Code: " + ex.getStatusCode()
+                    + "- Error Code: " + ex.getErrorCode()
+                    + "- Error Type: " + ex.getErrorType()
+                    + "- Request ID: " + ex.getRequestId()
+                    + "- XML: " + ex.getXML()
+                    + "- ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
+            dosyayaYaz("rapor kaydedilirken hata olustu");
+        }
+
+        return null;
+    }
+
+    /**
+     * rapor icerigini contents tablosuna kaydeder
+     *
+     * @param report
+     * @param ri
+     */
+    public void raporVTKaydet(FOS report, Rapor ri)
+    {
+        dosyayaYaz("rapor " + cnfg.getTABLE_CONTENTS() + " tablosuna kaydediliyor");
+        try
+        {
+            String raporIcerigi = report.getDosyaIcerigi();
+            String[] listeSatirlar = raporIcerigi.split("\n");
+
+            Statement statement = conn.createStatement();
+            String sorgu;
+            for (int i = 0; i < listeSatirlar.length; i++)
+            {
+                //String sorgu1 = "INSERT INTO ROYAL.ROYAL.REPORT_CONTENTS (REPORT_ID, ROW_ID";
+                String sorgu1 = "INSERT INTO " + cnfg.getTABLE_CONTENTS() + " (REPORT_ID, ROW_ID, UUID";
+                String sorgu2 = "VALUES (" + ri.getReportRequestID() + ", " + String.valueOf(i) + ", '" + ri.getUuid() + "' ";
+
+                String[] satirIcerigi = listeSatirlar[i].split("\t");
+
+                for (int j = 0; j < satirIcerigi.length; j++)
+                {
+                    satirIcerigi[j] = satirIcerigi[j].replace("'", "''");
+                    satirIcerigi[j] = satirIcerigi[j].replaceAll("[\n\r]", "");
+
+                    sorgu1 = sorgu1 + ", Column" + String.valueOf(j + 1);
+                    sorgu2 = sorgu2 + ", '" + satirIcerigi[j] + "'";
+                }
+
+                sorgu1 = sorgu1 + ")";
+                sorgu2 = sorgu2 + ");";
+                sorgu = sorgu1 + sorgu2;
+
+                //PrintWriter out = new PrintWriter(new FileWriter("sorgu.txt", true), true);
+                //out.write(sorgu + "\n");
+                //out.close();
+                statement.addBatch(sorgu);
+            }
+
+            String guncelleme = "UPDATE " + cnfg.getTABLE_REQUEST() + " SET DOWNLOADED_DB=1 WHERE ID=" + ri.getId() + ";";
+            statement.addBatch(guncelleme);
+
+            statement.executeBatch();
+
+            try
+            {
+                PreparedStatement pst = conn.prepareStatement("SELECT SCHEDULE_ID FROM " + cnfg.getTABLE_REQUEST() + " WHERE ID = " + ri.getId());
+                ResultSet rs = pst.executeQuery();
+                while (rs.next())
+                {
+                    int scheduleID = rs.getInt("SCHEDULE_ID");
+                    if (scheduleID != -1)
+                    {
+                        DateFormat dateFormat = new SimpleDateFormat(cnfg.getDATE_FORMAT());
+                        Date date = new Date();
+                        pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_SCHEDULE() + " SET REQUEST=0, LAST_REPORT_DATE=? WHERE ID=" + scheduleID);
+                        pst.setString(1, dateFormat.format(date));
+                        if (pst.executeUpdate() == 0)
+                        {
+                            dosyayaYaz("hata 17 : " + cnfg.getTABLE_SCHEDULE() + " tablosu guncellenirken hata olustu");
+                        }
+                    }
+                }
+            }
+            catch (SQLException e)
+            {
+                dosyayaYaz("hata 18 : " + e.getMessage());
+            }
+        }
+        catch (SQLException e)
+        {
+            dosyayaYaz("hata 31 : " + e.getMessage());
+        }
+
+        dosyayaYaz("rapor " + cnfg.getTABLE_CONTENTS() + " tablosuna kaydedildi");
+    }
+
+    /**
      * amws e baglanıi getReport islemi yapar. dosyayı indirir, dosya
      * iceriginden vt sorgusu hazırlayıp vt ye yazar
      *
@@ -325,26 +465,33 @@ public class VtMainThread extends Thread
      */
     public void getReport(Rapor ri)
     {
-        dosyayaYaz("rapor bilgisayara kaydediliyor - get_report : generated_report_id : " + ri.getReportRequestID());
+        dosyayaYaz("rapor kaydetme basladi - get_report : generated_report_id : " + ri.getReportRequestID());
 
         GetReportRequest request = new GetReportRequest();
         request.setMerchant(merchantId);
-
         request.setReportId(ri.getReportRequestID());
 
         //DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmssS");
         DateFormat dateFormat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
         Date date = new Date();
-
         String dosyaIsmi = "report_" + ri.getReportRequestID() + dateFormat.format(date) + ".xml";
 
-        try
+        //try
+        //{
+        FOS report = raporPCKaydet(dosyaIsmi, request, ri);
+        if (report != null)
         {
+            raporVTKaydet(report, ri);//todo : vt ye kaydetmeyi bir defa deniyor. kaydedemezse ne olacak
+        }
+
+        /*
             FOS report = new FOS(dosyaIsmi);
             request.setReportOutputStream(report);
 
             service.getReport(request);
+         */
 
+ /*
             String raporIcerigi = report.getDosyaIcerigi();
             String[] listeSatirlar = raporIcerigi.split("\n");
 
@@ -373,11 +520,11 @@ public class VtMainThread extends Thread
                 sorgu2 = sorgu2 + ");";
                 sorgu = sorgu1 + sorgu2;
 
-                /*
-                PrintWriter out = new PrintWriter(new FileWriter("sorgu.txt", true), true);
-                out.write(sorgu + "\n");
-                out.close();
-                 */
+                
+                //PrintWriter out = new PrintWriter(new FileWriter("sorgu.txt", true), true);
+                //out.write(sorgu + "\n");
+                //out.close();
+                
                 statement.addBatch(sorgu);
             }
 
@@ -400,7 +547,7 @@ public class VtMainThread extends Thread
                         pst.setString(1, dateFormat.format(date));
                         if (pst.executeUpdate() == 0)
                         {
-                            dosyayaYaz("hata 17 : " + cnfg.getTABLE_SCHEDULE() + " tablosun guncellenirken hata olustu");
+                            dosyayaYaz("hata 17 : " + cnfg.getTABLE_SCHEDULE() + " tablosu guncellenirken hata olustu");
                         }
                     }
                 }
@@ -409,9 +556,10 @@ public class VtMainThread extends Thread
             {
                 dosyayaYaz("hata 18 : " + e.getMessage());
             }
-            dosyayaYaz("rapor kaydedildi");
+         */
+        //dosyayaYaz("rapor kaydedildi");
 
-            /*
+        /*
             String genelSorgu="";
             String sorgu = "";
             for (int i = 0; i < listeSatirlar.length; i++)
@@ -436,7 +584,7 @@ public class VtMainThread extends Thread
                 sorgu = sorgu1 + sorgu2;
                 genelSorgu = genelSorgu + sorgu;
             }
-             */
+         */
  /*
             String genelSorgu;
             String sorgu1 = "INSERT INTO ROYAL.ROYAL.REPORT_CONTENTS (REPORT_ID, ROW_ID";
@@ -478,8 +626,9 @@ public class VtMainThread extends Thread
 
             genelSorgu = sorgu1 + sorgu;
             //genelSorgu = genelSorgu + ";UPDATE ROYAL.ROYAL.REPORT_REQUEST SET CONTENT=1 WHERE ID="+ri.getId()+";";
-             */
-        }
+         */
+        //}
+        /*
         catch (FileNotFoundException e)
         {
             dosyayaYaz("hata 2 : " + e.getMessage());
@@ -487,7 +636,13 @@ public class VtMainThread extends Thread
         }
         catch (MarketplaceWebServiceException ex)
         {
-            dosyayaYaz("hata 3 : " + ex.getMessage());
+            dosyayaYaz("hata 3 : " + ex.getMessage()
+                    + "- Response Status Code: " + ex.getStatusCode()
+                    + "- Error Code: " + ex.getErrorCode()
+                    + "- Error Type: " + ex.getErrorType()
+                    + "- Request ID: " + ex.getRequestId()
+                    + "- XML: " + ex.getXML()
+                    + "- ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
             dosyayaYaz("rapor kaydedilirken hata olustu");
 
 //            System.out.println("Caught Exception: " + ex.getMessage());
@@ -498,12 +653,14 @@ public class VtMainThread extends Thread
 //            System.out.print("XML: " + ex.getXML());
 //            System.out.println("ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
         }
+         */
+ /*
         catch (SQLException e)
         {
             dosyayaYaz("hata 4 : " + e.getMessage());
             dosyayaYaz("rapor kaydedilirken hata olustu");
         }
-
+         */
         dosyayaYaz("rapor bilgisayara kaydedildi - get_report : generated_report_id : " + ri.getReportRequestID());
     }
 
@@ -520,13 +677,13 @@ public class VtMainThread extends Thread
 
         try
         {
-            PreparedStatement pst = conn.prepareStatement("SELECT ID, REPORT_REQUEST_ID FROM " + cnfg.getTABLE_REQUEST() + " WHERE STATUS='_SUBMITTED_' OR  STATUS='_IN_PROGRESS_';");
+            PreparedStatement pst = conn.prepareStatement("SELECT ID, REPORT_REQUEST_ID, UUID FROM " + cnfg.getTABLE_REQUEST() + " WHERE STATUS='_SUBMITTED_' OR  STATUS='_IN_PROGRESS_';");
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
-                dosyayaYaz("hazırlanan rapor bulundu : report_request_id : " + rs.getString("REPORT_REQUEST_ID"));
+                dosyayaYaz("hazırlanan rapor bulundu : report_request_id : " + rs.getString("REPORT_REQUEST_ID") + ", uuid : " + rs.getString("UUID"));
 
-                Rapor ri = new Rapor(rs.getInt("ID"), rs.getString("REPORT_REQUEST_ID"));
+                Rapor ri = new Rapor(rs.getInt("ID"), rs.getString("REPORT_REQUEST_ID"), rs.getString("UUID"));
                 listeRaporIstek.add(ri);
             }
         }
@@ -585,7 +742,13 @@ public class VtMainThread extends Thread
         }
         catch (MarketplaceWebServiceException ex)
         {
-            dosyayaYaz("hata 6 : " + ex.getMessage());
+            dosyayaYaz("hata 6 : " + ex.getMessage()
+                    + "- Response Status Code: " + ex.getStatusCode()
+                    + "- Error Code: " + ex.getErrorCode()
+                    + "- Error Type: " + ex.getErrorType()
+                    + "- Request ID: " + ex.getRequestId()
+                    + "- XML: " + ex.getXML()
+                    + "- ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
             dosyayaYaz("rapor isteklerinin durumları kontrol edilirken hata olustu");
 
 //            System.out.println("Caught Exception: " + ex.getMessage());
@@ -754,7 +917,13 @@ public class VtMainThread extends Thread
         }
         catch (MarketplaceWebServiceException ex)
         {
-            dosyayaYaz("hata 9 : " + ex.getMessage());
+            dosyayaYaz("hata 9 : " + ex.getMessage()
+                    + "- Response Status Code: " + ex.getStatusCode()
+                    + "- Error Code: " + ex.getErrorCode()
+                    + "- Error Type: " + ex.getErrorType()
+                    + "- Request ID: " + ex.getRequestId()
+                    + "- XML: " + ex.getXML()
+                    + "- ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
             dosyayaYaz("sunucudan rapor istegi yapılırken hata olustu : vt_id: " + ri.getId());
 
 //            System.out.println("Caught Exception: " + ex.getMessage());

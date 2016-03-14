@@ -102,7 +102,7 @@ public class VtInsertThread extends Thread
      */
     public void reportContentsKayitEkle(String uuid)
     {
-        dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit ekleniyor");
+        dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit ekleniyor. uuid : " + uuid);
         BufferedReader br = null;
         try
         {
@@ -181,7 +181,7 @@ public class VtInsertThread extends Thread
         catch (SQLException e)
         {
             dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna kayit eklenirken hata olustu");
-            dosyayaYaz("hata 25 : " + e.getMessage());
+            dosyayaYaz("hata 30 : " + e.getMessage());
         }
 
         uuidYenile();

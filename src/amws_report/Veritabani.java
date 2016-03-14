@@ -16,7 +16,7 @@ public class Veritabani
         try
         {
             listTableViewTemizle();
-            PreparedStatement pst = conn.prepareStatement("SELECT START_DATE, END_DATE, REPORT_TYPE, SUBMIT_DATE, STATUS, REPORT_REQUEST_ID, GENERATED_REPORT_ID, DOWNLOADED, DOWNLOAD_TYPE, SCHEDULE_ID, UUID FROM " + cnfg.getTABLE_REQUEST());
+            PreparedStatement pst = conn.prepareStatement("SELECT START_DATE, END_DATE, REPORT_TYPE, SUBMIT_DATE, STATUS, REPORT_REQUEST_ID, GENERATED_REPORT_ID, DOWNLOADED_DB, DOWNLOAD_TYPE, SCHEDULE_ID, UUID FROM " + cnfg.getTABLE_REQUEST());
             ResultSet rs = pst.executeQuery();
             while (rs.next())
             {
@@ -27,7 +27,7 @@ public class Veritabani
                         rs.getString("STATUS"),
                         rs.getString("REPORT_REQUEST_ID"),
                         rs.getString("GENERATED_REPORT_ID"),
-                        rs.getString("DOWNLOADED"),
+                        rs.getString("DOWNLOADED_DB"),
                         rs.getString("DOWNLOAD_TYPE"),
                         rs.getString("SCHEDULE_ID"),
                         rs.getString("UUID"));
