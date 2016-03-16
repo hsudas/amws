@@ -339,13 +339,12 @@ public class VtMainThread extends Thread
             service.getReport(request);
 
             dosyayaYaz("rapor bilgisayara kaydedildi");
-
             dosyayaYaz("vt guncelleniyor");
 
             PreparedStatement pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_REQUEST() + " SET DOWNLOADED_PC=1 WHERE ID=" + ri.getId() + ";");
             if (pst.executeUpdate() == 0)
             {
-                dosyayaYaz("hata 32 : " + cnfg.getTABLE_SCHEDULE() + " tablosu guncellenirken hata olustu");
+                dosyayaYaz("hata 32 : " + cnfg.getTABLE_REQUEST() + " tablosu guncellenirken hata olustu");
             }
 
             dosyayaYaz("vt guncellendi");
@@ -354,7 +353,8 @@ public class VtMainThread extends Thread
         }
         catch (SQLException e)
         {
-
+            dosyayaYaz("hata 33 : " + e.getMessage());
+            dosyayaYaz("vt guncellenirken hata olustu");
         }
         catch (FileNotFoundException e)
         {
@@ -481,7 +481,7 @@ public class VtMainThread extends Thread
         FOS report = raporPCKaydet(dosyaIsmi, request, ri);
         if (report != null)
         {
-            raporVTKaydet(report, ri);//todo : vt ye kaydetmeyi bir defa deniyor. kaydedemezse ne olacak
+            //raporVTKaydet(report, ri);//todo : vt ye kaydetmeyi bir defa deniyor. kaydedemezse ne olacak
         }
 
         /*
