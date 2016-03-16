@@ -4,8 +4,6 @@ import java.io.File;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -29,8 +27,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import static javafx.application.Application.launch;
 import javafx.stage.FileChooser;
+import static javafx.application.Application.launch;
 
 public class Main extends Application
 {
@@ -49,6 +47,8 @@ public class Main extends Application
     private static LocalTimePicker tpBitis;
     private static Button btnTextToDB;//fxml text to db butonu
     private static TextField txtUUID;//UUID alani
+    private static Label lblTextToDB;//textToDB sonucunun yazacagı label
+    private static TextField txtTextToDB;
 
     @Override
     public void start(Stage stage) throws Exception
@@ -76,6 +76,7 @@ public class Main extends Application
         dpBitisTarih.setValue(LocalDate.now());
         btnTextToDB = (Button) root.lookup("#btnTextToDB");
         txtUUID = (TextField) root.lookup("#txtUUID");
+        txtTextToDB = (TextField) root.lookup("#txtTextToDB");
 
         uuidYenile();
         btnRaporIstek.setOnMouseClicked(new EventHandler<MouseEvent>()
@@ -98,8 +99,13 @@ public class Main extends Application
                 File file = fileChooser.showOpenDialog(stage);
                 if (file != null)
                 {
+                    txtToDBSetText("inserting...");
                     amws_report.VtInsertThread vtInsertThread = new amws_report.VtInsertThread(file, txtUUID.getText());
                     vtInsertThread.start();
+                }
+                else
+                {
+                    txtToDBSetText("error");
                 }
             }
         });
@@ -129,6 +135,16 @@ public class Main extends Application
 
         amws_report.VtMainThread vtMainThread = new amws_report.VtMainThread();
         vtMainThread.start();
+    }
+
+    /**
+     * textToDB tusuna basıldıktan sonra islem durumunu arayuze yazar
+     *
+     * @param text : textField a yazilacak islem durumu yazisi
+     */
+    public static void txtToDBSetText(String text)
+    {
+        txtTextToDB.setText(text);
     }
 
     /**

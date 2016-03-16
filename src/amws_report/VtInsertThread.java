@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Statement;
+import static amws_report.Main.txtToDBSetText;
 
 public class VtInsertThread extends Thread
 {
@@ -159,7 +160,17 @@ public class VtInsertThread extends Thread
         }
 
         uuidYenile();
+        txtToDBSetText("insert done");
 
+        try
+        {
+            conn.close();
+        }
+        catch (SQLException e)
+        {
+            dosyayaYaz("vt baglantisi kapatilamadi, conn : " + conn);
+            dosyayaYaz("hata 34 : " + e.getMessage());
+        }
         dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklendi");
     }
 
@@ -185,6 +196,16 @@ public class VtInsertThread extends Thread
         }
 
         uuidYenile();
+
+        try
+        {
+            conn.close();
+        }
+        catch (SQLException e)
+        {
+            dosyayaYaz("vt baglantisi kapatilamadi, conn : " + conn);
+            dosyayaYaz("hata 35 : " + e.getMessage());
+        }
 
         dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna kayit eklendi");
     }

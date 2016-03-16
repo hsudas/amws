@@ -63,6 +63,8 @@ public class FXMLDocumentController implements Initializable
     public Button btnTextToDB;
     @FXML
     public TextField txtUUID;
+    @FXML
+    public TextField txtTextToDB;
 
     public FXMLDocumentController()
     {
