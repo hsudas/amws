@@ -24,9 +24,11 @@ public class VtInsertThread extends Thread
     private YeniRaporIstek yri;
     private File file;
     private String uuid;
+    private Rapor ri;
     private int tip = -1;
     private final int TIP_REQUEST = 1;
     private final int TIP_CONTENTS = 2;
+    private final int TIP_CONTENTS_2 = 3;
 
     /**
      * request tablosuna eklemek icin kurucu fonksiyon
@@ -41,7 +43,8 @@ public class VtInsertThread extends Thread
     }
 
     /**
-     * contents tablosuna eklemek icin kurucu fonksiyon
+     * arayuzden secilen rapor icerigini contents tablosuna eklemek icin kurucu
+     * fonksiyon
      *
      * @param file : content tablosuna eklenecek dosya
      */
@@ -50,6 +53,21 @@ public class VtInsertThread extends Thread
         tip = TIP_CONTENTS;
         this.file = file;
         this.uuid = uuid;
+        cnfg = getCnfg();
+    }
+
+    /**
+     * reportRequest isleminde indirilen rapor icerigini contents tablosuna
+     * eklemek icin kurucu fonksiyon
+     *
+     * @param file : indirilen dosya
+     * @param ri : rapor bilgileri
+     */
+    public VtInsertThread(File file, Rapor ri)
+    {
+        tip = TIP_CONTENTS_2;
+        this.file = file;
+        this.ri = ri;
         cnfg = getCnfg();
     }
 
@@ -93,6 +111,24 @@ public class VtInsertThread extends Thread
                     dosyayaYaz("hata 25 : " + e.getMessage());
                 }
                 break;
+
+            case TIP_CONTENTS_2:
+                try
+                {
+                    dosyayaYaz("contents-2 insert thread olusturuldu");
+                    conn = vtBaglantisiKur(cnfg);
+                    if (conn != null)
+                    {
+                        reportContentsKayitEkle(ri);
+                        conn.close();
+                    }
+                }
+                catch (SQLException e)
+                {
+                    dosyayaYaz("hata 34 : " + e.getMessage());
+                }
+                break;
+
             default:
                 dosyayaYaz("hata 26 : hatali insert tipi");
         }
@@ -100,6 +136,8 @@ public class VtInsertThread extends Thread
 
     /**
      * contents tablosuna kayit ekler
+     *
+     * @param uuid : kayit uuid si
      */
     public void reportContentsKayitEkle(String uuid)
     {
@@ -162,15 +200,91 @@ public class VtInsertThread extends Thread
         uuidYenile();
         txtToDBSetText("insert done");
 
+        dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklendi");
+    }
+
+    /**
+     * contents tablosuna kayit ekler
+     *
+     * @param ri : rapor bilgileri
+     */
+    public void reportContentsKayitEkle(Rapor ri)
+    {
+        dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit ekleniyor. uuid : " + ri.getUuid());
+        BufferedReader br = null;
         try
         {
-            conn.close();
+            String sorgu;
+            Statement statement = conn.createStatement();
+
+            String sCurrentLine;
+            br = new BufferedReader(new FileReader(file));
+
+            int index = 0;
+
+            while ((sCurrentLine = br.readLine()) != null)
+            {
+                String sorgu1 = "INSERT INTO " + cnfg.getTABLE_CONTENTS() + " (REPORT_ID, ROW_ID, UUID";
+                //String sorgu2 = "VALUES (0, 0, '" + uuid + "' ";
+                String sorgu2 = "VALUES (" + ri.getReportRequestID() + ", " + String.valueOf(index) + ", '" + ri.getUuid() + "' ";
+
+                String[] satirIcerigi = sCurrentLine.split("\t");
+                for (int i = 0; i < satirIcerigi.length; i++)
+                {
+                    satirIcerigi[i] = satirIcerigi[i].replace("'", "''");
+                    satirIcerigi[i] = satirIcerigi[i].replaceAll("[\n\r]", "");
+
+                    sorgu1 = sorgu1 + ", Column" + String.valueOf(i + 1);
+                    sorgu2 = sorgu2 + ", '" + satirIcerigi[i] + "'";
+                }
+                sorgu1 = sorgu1 + ")";
+                sorgu2 = sorgu2 + ");";
+                sorgu = sorgu1 + sorgu2;
+                statement.addBatch(sorgu);
+
+                index++;
+            }
+            statement.executeBatch();
+
+            dosyayaYaz("vt guncelleniyor");
+
+            PreparedStatement pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_REQUEST() + " SET DOWNLOADED_DB=1 WHERE ID=" + ri.getId() + ";");
+            if (pst.executeUpdate() == 0)
+            {
+                dosyayaYaz("hata 32 : " + cnfg.getTABLE_REQUEST() + " tablosu guncellenirken hata olustu");
+            }
+
+            dosyayaYaz("vt guncellendi");
+        }
+        catch (IOException e)
+        {
+            dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklenirken hata olustu");
+            dosyayaYaz("hata 27 : " + e.getMessage());
         }
         catch (SQLException e)
         {
-            dosyayaYaz("vt baglantisi kapatilamadi, conn : " + conn);
-            dosyayaYaz("hata 34 : " + e.getMessage());
+            dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklenirken hata olustu");
+            dosyayaYaz("hata 28 : " + e.getMessage());
         }
+        finally
+        {
+            try
+            {
+                if (br != null)
+                {
+                    br.close();
+                }
+            }
+            catch (IOException e)
+            {
+                dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklenirken hata olustu");
+                dosyayaYaz("hata 29 : " + e.getMessage());
+            }
+        }
+
+        uuidYenile();
+        txtToDBSetText("insert done");
+
         dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklendi");
     }
 

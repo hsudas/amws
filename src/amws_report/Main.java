@@ -97,6 +97,11 @@ public class Main extends Application
                 fileChooser.setTitle("Open Resource File");
 
                 File file = fileChooser.showOpenDialog(stage);
+
+                textToDB(file);
+
+                /*
+                File file = fileChooser.showOpenDialog(stage);
                 if (file != null)
                 {
                     txtToDBSetText("inserting...");
@@ -107,6 +112,7 @@ public class Main extends Application
                 {
                     txtToDBSetText("error");
                 }
+                 */
             }
         });
 
@@ -135,6 +141,46 @@ public class Main extends Application
 
         amws_report.VtMainThread vtMainThread = new amws_report.VtMainThread();
         vtMainThread.start();
+    }
+
+    /**
+     * reportRequest isleminde indirilen rapor icerigini vt ye yazacak olan
+     * thread i baslatir
+     *
+     * @param file : indirilen dosya
+     * @param ri : rapor bilgileri
+     */
+    public static void textToDB(File file, Rapor ri)
+    {
+        if (file != null)
+        {
+            txtToDBSetText("inserting...");
+            amws_report.VtInsertThread vtInsertThread = new amws_report.VtInsertThread(file, ri);
+            vtInsertThread.start();
+        }
+        else
+        {
+            txtToDBSetText("error");
+        }
+    }
+
+    /**
+     * arayuzden secilen raporu vt ye kaydeder
+     *
+     * @param file : rapor dosyası
+     */
+    public static void textToDB(File file)
+    {
+        if (file != null)
+        {
+            txtToDBSetText("inserting...");
+            amws_report.VtInsertThread vtInsertThread = new amws_report.VtInsertThread(file, txtUUID.getText());
+            vtInsertThread.start();
+        }
+        else
+        {
+            txtToDBSetText("error");
+        }
     }
 
     /**

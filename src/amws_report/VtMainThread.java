@@ -19,10 +19,14 @@ import java.util.Date;
 
 import static amws_report.Main.dosyayaYaz;
 import static amws_report.Main.getCnfg;
+import static amws_report.Main.textToDB;
 import static amws_report.Veritabani.reportRequestTableViewGuncelle;
 import static amws_report.Veritabani.vtBaglantisiKur;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 
 public class VtMainThread extends Thread
@@ -328,38 +332,50 @@ public class VtMainThread extends Thread
      * @param ri
      * @return
      */
-    public FOS raporPCKaydet(String dosyaIsmi, GetReportRequest request, Rapor ri)
+    public File raporPCKaydet(GetReportRequest request, Rapor ri)
     {
         dosyayaYaz("rapor bilgisayara kaydediliyor");
 
         try
         {
-            FOS report = new FOS(dosyaIsmi);
+            DateFormat dateFormat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
+            Date date = new Date();
+            String dosyaIsmi = "report_" + ri.getReportRequestID() + dateFormat.format(date) + ".xml";
+
+            File file = new File(dosyaIsmi);
+
+            OutputStream report = new FileOutputStream(file);
+            //OutputStream report = new FileOutputStream(dosyaIsmi);
+            //FOS report = new FOS(dosyaIsmi);
             request.setReportOutputStream(report);
             service.getReport(request);
 
-            dosyayaYaz("rapor bilgisayara kaydedildi");
+            dosyayaYaz("rapor bilgisayara kaydedildi, dosya : " + file.getAbsolutePath());
             dosyayaYaz("vt guncelleniyor");
 
             PreparedStatement pst = conn.prepareStatement("UPDATE " + cnfg.getTABLE_REQUEST() + " SET DOWNLOADED_PC=1 WHERE ID=" + ri.getId() + ";");
             if (pst.executeUpdate() == 0)
             {
                 dosyayaYaz("hata 32 : " + cnfg.getTABLE_REQUEST() + " tablosu guncellenirken hata olustu");
+                return null;
             }
 
             dosyayaYaz("vt guncellendi");
-
-            return report;
+            return file;
         }
         catch (SQLException e)
         {
             dosyayaYaz("hata 33 : " + e.getMessage());
             dosyayaYaz("vt guncellenirken hata olustu");
+            return null;
+
         }
         catch (FileNotFoundException e)
         {
             dosyayaYaz("hata 2 : " + e.getMessage());
             dosyayaYaz("rapor kaydedilirken hata olustu");
+            return null;
+
         }
         catch (MarketplaceWebServiceException ex)
         {
@@ -371,9 +387,8 @@ public class VtMainThread extends Thread
                     + "- XML: " + ex.getXML()
                     + "- ResponseHeaderMetadata: " + ex.getResponseHeaderMetadata());
             dosyayaYaz("rapor kaydedilirken hata olustu");
+            return null;
         }
-
-        return null;
     }
 
     /**
@@ -382,6 +397,7 @@ public class VtMainThread extends Thread
      * @param report
      * @param ri
      */
+    /*
     public void raporVTKaydet(FOS report, Rapor ri)
     {
         dosyayaYaz("rapor " + cnfg.getTABLE_CONTENTS() + " tablosuna kaydediliyor");
@@ -456,7 +472,7 @@ public class VtMainThread extends Thread
 
         dosyayaYaz("rapor " + cnfg.getTABLE_CONTENTS() + " tablosuna kaydedildi");
     }
-
+     */
     /**
      * amws e baglanıi getReport islemi yapar. dosyayı indirir, dosya
      * iceriginden vt sorgusu hazırlayıp vt ye yazar
@@ -472,15 +488,15 @@ public class VtMainThread extends Thread
         request.setReportId(ri.getReportRequestID());
 
         //DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmssS");
-        DateFormat dateFormat = new SimpleDateFormat(cnfg.getFILE_NAME_FORMAT());
-        Date date = new Date();
-        String dosyaIsmi = "report_" + ri.getReportRequestID() + dateFormat.format(date) + ".xml";
-
         //try
         //{
-        FOS report = raporPCKaydet(dosyaIsmi, request, ri);
-        if (report != null)
+        File dosya = raporPCKaydet(request, ri);
+
+        if (dosya != null)
         {
+            //String path = new File(".").getAbsolutePath();
+            //File file = new File(path+get+appName);
+            textToDB(dosya, ri);
             //raporVTKaydet(report, ri);//todo : vt ye kaydetmeyi bir defa deniyor. kaydedemezse ne olacak
         }
 
