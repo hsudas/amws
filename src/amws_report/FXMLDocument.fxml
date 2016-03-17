@@ -87,13 +87,13 @@
                         <TableColumn fx:id="col5" prefWidth="150.0" text="STATUS" />
                         <TableColumn fx:id="col6" prefWidth="150.0" text="REPORT REQUEST ID" />
                         <TableColumn fx:id="col7" prefWidth="150.0" text="GENERATED REPORT ID" />
-                        <TableColumn fx:id="col8" prefWidth="150.0" text="DOWNLOADED" />
+                        <TableColumn fx:id="col8" prefWidth="150.0" text="DOWNLOADED DB" />
                         <TableColumn fx:id="col9" prefWidth="150.0" text="DOWNLOAD TYPE" />
                         <TableColumn fx:id="col10" prefWidth="150.0" text="SCHEDULE ID" />
                         <TableColumn fx:id="col11" prefWidth="150.0" text="UUID" />
+                  <TableColumn fx:id="col12" prefWidth="150.0" text="DOWNLOADED PC" />
                     </columns>
                 </TableView>
-                <Label minHeight="26.0" prefHeight="26.0" prefWidth="58.0" text="290216" GridPane.columnSpan="2147483647" GridPane.rowIndex="6" />
                 <TextField fx:id="txtUUID" alignment="TOP_LEFT" maxWidth="480.0" minHeight="26.0" prefHeight="26.0" prefWidth="480.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER" GridPane.valignment="CENTER" GridPane.vgrow="NEVER">
                     <GridPane.margin>
                         <Insets left="5.0" right="5.0" />
@@ -104,12 +104,13 @@
                         <Insets left="5.0" right="5.0" />
                     </GridPane.margin>
                 </Label>
-            <HBox prefHeight="100.0" prefWidth="200.0" GridPane.columnSpan="2" GridPane.rowIndex="5">
+            <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="2" GridPane.rowIndex="6">
                <children>
-                      <Button fx:id="btnTextToDB" minHeight="26.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="102.0" text="Text to DB" />
-                  <TextField fx:id="txtTextToDB" editable="false" prefHeight="35.0" prefWidth="129.0" />
+                      <Label minHeight="26.0" prefHeight="26.0" prefWidth="58.0" text="290216" />
                </children>
             </HBox>
+            <TextField fx:id="txtTextToDB" editable="false" prefHeight="35.0" prefWidth="147.0" GridPane.columnSpan="2" GridPane.rowIndex="6" />
+                <Button fx:id="btnTextToDB" minHeight="26.0" minWidth="100.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="147.0" text="Text to DB" GridPane.rowIndex="5" />
             </children>
             <padding>
                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

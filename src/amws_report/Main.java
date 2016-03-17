@@ -263,9 +263,10 @@ public class Main extends Application
             String stn8,
             String stn9,
             String stn10,
-            String stn11)
+            String stn11,
+            String stn12)
     {
-        listTableView.add(new amws_report.ReportRequestTableView(stn1, stn2, stn3, stn4, stn5, stn6, stn7, stn8, stn9, stn10, stn11));
+        listTableView.add(new amws_report.ReportRequestTableView(stn1, stn2, stn3, stn4, stn5, stn6, stn7, stn8, stn9, stn10, stn11, stn12));
         ObservableList data = FXCollections.observableList(listTableView);
         tableView.setItems(data);
     }

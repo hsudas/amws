@@ -16,12 +16,24 @@ public class ReportRequestTableView
     public SimpleStringProperty stn5;//STATUS
     public SimpleStringProperty stn6;//REPORT_REQUEST_ID
     public SimpleStringProperty stn7;//GENERATED_REPORT_ID
-    public SimpleStringProperty stn8;//DOWNLOADED
+    public SimpleStringProperty stn8;//DOWNLOADED_DB
     public SimpleStringProperty stn9;//DOWNLOAD_TYPE
     public SimpleStringProperty stn10;//SCHEDULE_ID
     public SimpleStringProperty stn11;//UUID
+    public SimpleStringProperty stn12;//DOWNLOADED_PC
 
-    public ReportRequestTableView(String stn1, String stn2, String stn3, String stn4, String stn5, String stn6, String stn7, String stn8, String stn9, String stn10, String stn11)
+    public ReportRequestTableView(String stn1,
+            String stn2,
+            String stn3,
+            String stn4,
+            String stn5,
+            String stn6,
+            String stn7,
+            String stn8,
+            String stn9,
+            String stn10,
+            String stn11,
+            String stn12)
     {
         this.stn1 = new SimpleStringProperty(stn1);
         this.stn2 = new SimpleStringProperty(stn2);
@@ -34,6 +46,7 @@ public class ReportRequestTableView
         this.stn9 = new SimpleStringProperty(stn9);
         this.stn10 = new SimpleStringProperty(stn10);
         this.stn11 = new SimpleStringProperty(stn11);
+        this.stn12 = new SimpleStringProperty(stn12);
     }
 
     public String getStn1()
@@ -89,6 +102,11 @@ public class ReportRequestTableView
     public String getStn11()
     {
         return stn11.get();
+    }
+
+    public String getStn12()
+    {
+        return stn12.get();
     }
 
     /*
