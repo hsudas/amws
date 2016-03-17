@@ -84,7 +84,6 @@ public class Main extends Application
             @Override
             public void handle(MouseEvent mouseEvent)
             {
-                //System.out.println("tiklandi : " + mouseEvent);
                 reportRequestKayitEkle();
             }
         });
@@ -154,7 +153,7 @@ public class Main extends Application
     {
         if (file != null)
         {
-            txtToDBSetText("inserting...");
+            txtToDBSetText("creating query");
             amws_report.VtInsertThread vtInsertThread = new amws_report.VtInsertThread(file, ri);
             vtInsertThread.start();
         }
@@ -173,7 +172,7 @@ public class Main extends Application
     {
         if (file != null)
         {
-            txtToDBSetText("inserting...");
+            txtToDBSetText("creating query");
             amws_report.VtInsertThread vtInsertThread = new amws_report.VtInsertThread(file, txtUUID.getText());
             vtInsertThread.start();
         }

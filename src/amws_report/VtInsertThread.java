@@ -47,6 +47,7 @@ public class VtInsertThread extends Thread
      * fonksiyon
      *
      * @param file : content tablosuna eklenecek dosya
+     * @param uuid
      */
     public VtInsertThread(File file, String uuid)
     {
@@ -141,6 +142,7 @@ public class VtInsertThread extends Thread
      */
     public void reportContentsKayitEkle(String uuid)
     {
+        txtToDBSetText("inserting");
         dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit ekleniyor. uuid : " + uuid);
         BufferedReader br = null;
         try
@@ -199,7 +201,6 @@ public class VtInsertThread extends Thread
 
         uuidYenile();
         txtToDBSetText("insert done");
-
         dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklendi");
     }
 
@@ -210,6 +211,7 @@ public class VtInsertThread extends Thread
      */
     public void reportContentsKayitEkle(Rapor ri)
     {
+        txtToDBSetText("inserting");
         dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit ekleniyor. uuid : " + ri.getUuid());
         BufferedReader br = null;
         try
@@ -284,7 +286,6 @@ public class VtInsertThread extends Thread
 
         uuidYenile();
         txtToDBSetText("insert done");
-
         dosyayaYaz(cnfg.getTABLE_CONTENTS() + " tablosuna kayit eklendi");
     }
 
@@ -293,6 +294,7 @@ public class VtInsertThread extends Thread
      */
     public void reportRequestKayitEkle()
     {
+        txtToDBSetText("inserting");
         dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna kayit ekleniyor");
         try
         {
@@ -321,6 +323,7 @@ public class VtInsertThread extends Thread
             dosyayaYaz("hata 35 : " + e.getMessage());
         }
 
+        txtToDBSetText("insert done");
         dosyayaYaz(cnfg.getTABLE_REQUEST() + " tablosuna kayit eklendi");
     }
 }
